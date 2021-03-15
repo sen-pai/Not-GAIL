@@ -1,0 +1,115 @@
+-----------------------------------
+| raw\neg_gen\rollout/ |          |
+|    ep_len_mean       | 21.2     |
+|    ep_rew_mean       | 21.2     |
+| raw\neg_gen\time/    |          |
+|    fps               | 494      |
+|    iterations        | 1        |
+|    time_elapsed      | 2        |
+|    total_timesteps   | 1000     |
+-----------------------------------
+-----------------------------------------
+| raw\neg_gen\rollout/    |             |
+|    ep_len_mean          | 18.3        |
+|    ep_rew_mean          | 18.3        |
+| raw\neg_gen\time/       |             |
+|    fps                  | 977         |
+|    iterations           | 1           |
+|    time_elapsed         | 2           |
+|    total_timesteps      | 2000        |
+| raw\neg_gen\train/      |             |
+|    approx_kl            | 0.007171008 |
+|    clip_fraction        | 0.17        |
+|    clip_range           | 0.2         |
+|    entropy_loss         | -0.683      |
+|    explained_variance   | -0.0603     |
+|    learning_rate        | 0.0003      |
+|    loss                 | -0.00226    |
+|    n_updates            | 10          |
+|    policy_gradient_loss | -0.0222     |
+|    value_loss           | 0.713       |
+-----------------------------------------
+-----------------------------------------
+| raw\neg_gen\rollout/    |             |
+|    ep_len_mean          | 15.1        |
+|    ep_rew_mean          | 15.1        |
+| raw\neg_gen\time/       |             |
+|    fps                  | 1493        |
+|    iterations           | 1           |
+|    time_elapsed         | 2           |
+|    total_timesteps      | 3000        |
+| raw\neg_gen\train/      |             |
+|    approx_kl            | 0.025472967 |
+|    clip_fraction        | 0.3         |
+|    clip_range           | 0.2         |
+|    entropy_loss         | -0.63       |
+|    explained_variance   | 0.327       |
+|    learning_rate        | 0.0003      |
+|    loss                 | 0.0604      |
+|    n_updates            | 20          |
+|    policy_gradient_loss | -0.0274     |
+|    value_loss           | 0.213       |
+-----------------------------------------
+-----------------------------------------
+| raw\neg_gen\rollout/    |             |
+|    ep_len_mean          | 11.7        |
+|    ep_rew_mean          | 11.7        |
+| raw\neg_gen\time/       |             |
+|    fps                  | 2011        |
+|    iterations           | 1           |
+|    time_elapsed         | 1           |
+|    total_timesteps      | 4000        |
+| raw\neg_gen\train/      |             |
+|    approx_kl            | 0.040896744 |
+|    clip_fraction        | 0.479       |
+|    clip_range           | 0.2         |
+|    entropy_loss         | -0.502      |
+|    explained_variance   | 0.719       |
+|    learning_rate        | 0.0003      |
+|    loss                 | -0.107      |
+|    n_updates            | 30          |
+|    policy_gradient_loss | -0.0558     |
+|    value_loss           | 0.124       |
+-----------------------------------------
+-----------------------------------------
+| raw\neg_gen\rollout/    |             |
+|    ep_len_mean          | 9.63        |
+|    ep_rew_mean          | 9.63        |
+| raw\neg_gen\time/       |             |
+|    fps                  | 2289        |
+|    iterations           | 1           |
+|    time_elapsed         | 2           |
+|    total_timesteps      | 5000        |
+| raw\neg_gen\train/      |             |
+|    approx_kl            | 0.041919008 |
+|    clip_fraction        | 0.174       |
+|    clip_range           | 0.2         |
+|    entropy_loss         | -0.354      |
+|    explained_variance   | 0.832       |
+|    learning_rate        | 0.0003      |
+|    loss                 | -0.0719     |
+|    n_updates            | 40          |
+|    policy_gradient_loss | -0.0452     |
+|    value_loss           | 0.0384      |
+-----------------------------------------
+------------------------------------------
+| raw\neg_gen\rollout/    |              |
+|    ep_len_mean          | 9.14         |
+|    ep_rew_mean          | 9.14         |
+| raw\neg_gen\time/       |              |
+|    fps                  | 2991         |
+|    iterations           | 1            |
+|    time_elapsed         | 2            |
+|    total_timesteps      | 6000         |
+| raw\neg_gen\train/      |              |
+|    approx_kl            | 0.0038293935 |
+|    clip_fraction        | 0.0596       |
+|    clip_range           | 0.2          |
+|    entropy_loss         | -0.282       |
+|    explained_variance   | 0.892        |
+|    learning_rate        | 0.0003       |
+|    loss                 | -0.0342      |
+|    n_updates            | 50           |
+|    policy_gradient_loss | -0.0242      |
+|    value_loss           | 0.0206       |
+------------------------------------------
