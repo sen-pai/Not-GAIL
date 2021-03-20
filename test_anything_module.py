@@ -23,13 +23,12 @@ neg_gail_trainer = anything_module.AnythingGAIL(
     venv,
     expert_data=transitions,
     expert_batch_size=32,
-    gen_algo= PPO("MlpPolicy", venv, verbose=1, n_steps= int(1e3)),
-    neg_gen_algo= PPO("MlpPolicy", venv, verbose=1, n_steps= int(1e3)),
+    gen_algo= PPO("MlpPolicy", venv, verbose=1, n_steps= int(960)),
+    neg_gen_algo= PPO("MlpPolicy", venv, verbose=1, n_steps= int(960)),
 
 )
 
-print("trained once")
-neg_gail_trainer.train(total_timesteps= int(2e3))
+neg_gail_trainer.train(total_timesteps= int(1e5))
 
-print("started training again")
-neg_gail_trainer.train(total_timesteps= int(2e3))
+neg_gail_trainer.gen_algo.save("normal_gail_cartpole")
+neg_gail_trainer.neg_gen_algo.save("neg_gail_cartpole")
