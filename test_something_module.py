@@ -10,14 +10,14 @@ from stable_baselines3 import PPO
 
 env = gym.make('CartPole-v1')
 
-with open("cartpole_proper.pkl", "rb") as f:
+with open("cartpole_worst.pkl", "rb") as f:
     trajectories = pickle.load(f)
 
 transitions = rollout.flatten_trajectories(trajectories)
 
 venv = util.make_vec_env("CartPole-v1", n_envs=1)
 
-logger.configure("cartpole_neg_logs")
+logger.configure("cartpole_something_logs")
 
 neg_gail_trainer = anything_module.AnythingGAIL(
     venv,
@@ -37,4 +37,9 @@ something_gail_trainer = something_module.SomethingGAIL(
 )
 
 
-something_gail_trainer.train(int(1e5))
+something_gail_trainer.train(int(2e4))
+
+something_gail_trainer.anything_trainers[0].gen_algo.save("some_any_gen")
+something_gail_trainer.anything_trainers[0].neg_gen_algo.save("some_any_neg_gen")
+
+something_gail_trainer.gen_algo.save("something_gen")

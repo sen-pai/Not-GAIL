@@ -30,5 +30,6 @@ neg_gail_trainer = anything_module.AnythingGAIL(
 
 neg_gail_trainer.train(total_timesteps= int(1e5))
 
+
 neg_gail_trainer.gen_algo.save("normal_gail_cartpole")
 neg_gail_trainer.neg_gen_algo.save("neg_gail_cartpole")

@@ -1,3 +1,4 @@
 {
-    "python.pythonPath": "C:\\Users\\sharan\\anaconda3\\envs\\notg\\python.exe"
+    "python.pythonPath": "C:\\Users\\sharan\\anaconda3\\envs\\notg\\python.exe",
+    "python.formatting.provider": "black"
 }

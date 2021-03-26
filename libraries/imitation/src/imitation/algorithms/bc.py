@@ -10,6 +10,7 @@ from typing import Any, Callable, Dict, Iterable, Mapping, Optional, Tuple, Type
 import gym
 import numpy as np
 import torch as th
+import torch.nn as nn # ADDED
 import torch.utils.data as th_data
 import tqdm.autonotebook as tqdm
 from stable_baselines3.common import logger, policies, utils
@@ -151,6 +152,8 @@ class BC:
         self,
         observation_space: gym.Space,
         action_space: gym.Space,
+        loss_type:str, #three types, ["original", "l2", "ce" ]
+        is_image: bool = False,
         *,
         policy_class: Type[policies.BasePolicy] = base.FeedForward32Policy,
         policy_kwargs: Optional[Mapping[str, Any]] = None,
@@ -207,6 +210,14 @@ class BC:
         self.ent_weight = ent_weight
         self.l2_weight = l2_weight
 
+        self.loss_type = loss_type
+        if self.loss_type == "l2":
+            self.loss_fn = nn.MSELoss()
+        if self.loss_type == "ce":
+            self.loss_fn = nn.CrossEntropyLoss()
+
+        self.is_image = is_image
+
         if expert_data is not None:
             self.set_expert_data_loader(expert_data)
 
@@ -260,6 +271,9 @@ class BC:
         obs = th.as_tensor(obs, device=self.device).detach()
         acts = th.as_tensor(acts, device=self.device).detach()
 
+        if self.is_image:
+            obs = th.squeeze(obs)
+
         _, log_prob, entropy = self.policy.evaluate_actions(obs, acts)
         prob_true_act = th.exp(log_prob).mean()
         log_prob = log_prob.mean()
@@ -284,6 +298,101 @@ class BC:
         )
 
         return loss, stats_dict
+
+    def _calculate_only_l2_loss(
+        self,
+        obs: Union[th.Tensor, np.ndarray],
+        acts: Union[th.Tensor, np.ndarray],
+    ) -> Tuple[th.Tensor, Dict[str, float]]:
+        """
+        Calculate the supervised learning loss used to train the behavioral clone.
+
+        Args:
+            obs: The observations seen by the expert. If this is a Tensor, then
+                gradients are detached first before loss is calculated.
+            acts: The actions taken by the expert. If this is a Tensor, then its
+                gradients are detached first before loss is calculated.
+
+        Returns:
+            loss: The supervised learning loss for the behavioral clone to optimize.
+            stats_dict: Statistics about the learning process to be logged.
+
+        """
+        obs = th.as_tensor(obs, device=self.device, dtype=th.float).detach()
+        acts = th.as_tensor(acts, device=self.device, dtype=th.float).detach()
+        # print(obs.shape)
+        obs = th.squeeze(obs)
+        # print(obs.shape)
+
+        pred_actions, _= self.policy.predict(obs.cpu().numpy())
+        print("actions", acts)
+        # print("obs", obs)
+        
+
+        pred_actions = th.tensor(pred_actions, dtype=th.float, device=self.device, requires_grad=True)
+        print("pred actions", pred_actions)
+        only_l2_loss = self.loss_fn(pred_actions, acts)
+        print(only_l2_loss)
+        stats_dict = dict(
+            neglogp= 0 ,
+            loss=only_l2_loss.item(),
+            entropy= 0,
+            ent_loss= 0 ,
+            prob_true_act= 0 ,
+            l2_norm= 0,
+            l2_loss= 0,
+        )
+
+        return only_l2_loss, stats_dict
+
+    def _calculate_crossentropy_loss(
+        self,
+        obs: Union[th.Tensor, np.ndarray],
+        acts: Union[th.Tensor, np.ndarray],
+    ) -> Tuple[th.Tensor, Dict[str, float]]:
+        """
+        Calculate the supervised learning loss used to train the behavioral clone.
+
+        Args:
+            obs: The observations seen by the expert. If this is a Tensor, then
+                gradients are detached first before loss is calculated.
+            acts: The actions taken by the expert. If this is a Tensor, then its
+                gradients are detached first before loss is calculated.
+
+        Returns:
+            loss: The supervised learning loss for the behavioral clone to optimize.
+            stats_dict: Statistics about the learning process to be logged.
+
+        """
+        obs = th.as_tensor(obs, device=self.device, dtype=th.float).detach()
+        acts = th.as_tensor(acts, device=self.device, dtype=th.float).detach()
+        # print(obs.shape)
+        obs = th.squeeze(obs)
+        # print(obs.shape)
+
+        pred_actions, _, _= self.policy(obs)
+        # print("actions", acts)
+        # print("one hot acts", nn.functional.one_hot(acts.long(), 7))
+        # print("obs", obs)
+        acts = th.squeeze(acts)
+        # print(acts.shape)
+        pred_actions = th.tensor(pred_actions, device=self.device)
+        pred_actions = th.tensor(nn.functional.one_hot(pred_actions, 7), dtype = th.float, device=self.device, requires_grad = True)
+        
+        # print("pred actions", pred_actions.shape)
+        only_l2_loss = self.loss_fn(pred_actions, acts.long())
+        # print(only_l2_loss)
+        stats_dict = dict(
+            neglogp= 0 ,
+            loss=only_l2_loss.item(),
+            entropy= 0,
+            ent_loss= 0 ,
+            prob_true_act= 0 ,
+            l2_norm= 0,
+            l2_loss= 0,
+        )
+
+        return only_l2_loss, stats_dict
 
     def train(
         self,
@@ -316,8 +425,14 @@ class BC:
 
         batch_num = 0
         for batch, stats_dict_it in it:
-            loss, stats_dict_loss = self._calculate_loss(batch["obs"], batch["acts"])
 
+            if self.loss_type == "original":
+                loss, stats_dict_loss = self._calculate_loss(batch["obs"], batch["acts"])
+            if self.loss_type == "l2":
+                loss, stats_dict_loss = self._calculate_only_l2_loss(batch["obs"], batch["acts"])
+            if self.loss_type == "ce":
+                loss, stats_dict_loss = self._calculate_crossentropy_loss(batch["obs"], batch["acts"])
+            
             self.optimizer.zero_grad()
             loss.backward()
             self.optimizer.step()

@@ -285,6 +285,31 @@ class ActObsMLP(nn.Module):
         return outputs.squeeze(1)
 
 
+
+class ObsMLP(nn.Module):
+    """Simple MLP that takes only an observation and produces a single
+    output."""
+
+    def __init__(
+        self, action_space: gym.Space, observation_space: gym.Space, **mlp_kwargs
+    ):
+        super().__init__()
+
+        in_size = preprocessing.get_flattened_obs_dim(observation_space)
+        print(observation_space, in_size)
+        self.mlp = networks.build_mlp(
+            **{"in_size": in_size, "out_size": 1, **mlp_kwargs}
+        )
+
+    def forward(self, obs: th.Tensor, acts: th.Tensor) -> th.Tensor:
+        # cat_inputs = th.cat((obs, acts), dim=1)
+        # print(obs.shape)
+        outputs = self.mlp(obs)
+        return outputs.squeeze(1)
+
+
+
+
 class DiscrimNetGAIL(DiscrimNet):
     """The discriminator to use for GAIL."""
 
@@ -310,11 +335,17 @@ class DiscrimNetGAIL(DiscrimNet):
         )
 
         if discrim_net is None:
-            self.discriminator = ActObsMLP(
+            # self.discriminator = ActObsMLP(
+            #     action_space=action_space,
+            #     observation_space=observation_space,
+            #     hid_sizes=(32, 32),
+            # )
+            self.discriminator = ObsMLP(
                 action_space=action_space,
                 observation_space=observation_space,
                 hid_sizes=(32, 32),
             )
+            
         else:
             self.discriminator = discrim_net
 

@@ -42,6 +42,7 @@ def make_vec_env(
     log_dir: Optional[str] = None,
     max_episode_steps: Optional[int] = None,
     post_wrappers: Optional[Sequence[Callable[[gym.Env, int], gym.Env]]] = None,
+    post_wrappers_kwargs = None,
 ) -> VecEnv:
     """Returns a VecEnv initialized with `n_envs` Envs.
 
@@ -99,8 +100,8 @@ def make_vec_env(
         env = wrappers.RolloutInfoWrapper(env)
 
         if post_wrappers:
-            for wrapper in post_wrappers:
-                env = wrapper(env, i)
+            for i, wrapper in enumerate(post_wrappers):
+                env = wrapper(env, **post_wrappers_kwargs[i])
 
         return env
 

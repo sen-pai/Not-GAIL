@@ -85,6 +85,7 @@ class RewardVecEnvWrapper(vec_env.VecEnvWrapper):
         obs_fixed = np.stack(obs_fixed)
 
         rews = self.reward_fn(self._old_obs, self._actions, obs_fixed, np.array(dones))
+        # print(rews)
         assert len(rews) == len(obs), "must return one rew for each env"
         done_mask = np.asarray(dones, dtype="bool").reshape((len(dones),))
 
@@ -159,7 +160,8 @@ class SomethingRewardVecEnvWrapper(vec_env.VecEnvWrapper):
         # print("Main Task Reward:", main_rews)
         # print("Anything Rewards:", anything_rews)
         
-        rews = main_rews
+        #just adding the rewards, shamelessly 
+        rews = main_rews + anything_rews[0]
         assert len(rews) == len(obs), "must return one rew for each env"
         done_mask = np.asarray(dones, dtype="bool").reshape((len(dones),))
 

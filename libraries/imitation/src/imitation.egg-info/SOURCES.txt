@@ -1,5 +1,4 @@
 README.md
-pyproject.toml
 setup.cfg
 setup.py
 src/imitation/__init__.py
@@ -16,6 +15,7 @@ src/imitation/algorithms/anything_module.py
 src/imitation/algorithms/bc.py
 src/imitation/algorithms/dagger.py
 src/imitation/algorithms/density_baselines.py
+src/imitation/algorithms/something_module.py
 src/imitation/algorithms/tabular_irl.py
 src/imitation/analysis/__init__.py
 src/imitation/analysis/mountain_car_plots.py

@@ -13,16 +13,18 @@ from gym_minigrid import wrappers
 from stable_baselines3 import PPO
 
 
-env = gym.make('MiniGrid-Empty-Random-6x6-v0')
+env = gym.make('MiniGrid-LavaGapS5-v0')
+
 env = wrappers.FlatObsWrapper(env)
 
 
-ppo_trained_policy = PPO.load("ppo_minigrid_empty")
+ppo_trained_policy = PPO.load("ppo_minigrid_curriculum_lava_5")
 
 
 obs = env.reset()
 for i in range(1000):
     action, _state = ppo_trained_policy.predict(obs, deterministic=True)
+    
     obs, reward, done, info = env.step(action)
     env.render()
     if done:

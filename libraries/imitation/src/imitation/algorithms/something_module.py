@@ -327,6 +327,7 @@ class SomethingTrainer:
             f"{self.gen_batch_size} timesteps, have only "
             f"total_timesteps={total_timesteps})!"
         )
+
         for r in tqdm.tqdm(range(0, n_rounds), desc="round"):
             self.train_gen(self.gen_batch_size)
             for _ in range(self.n_disc_updates_per_round):
@@ -338,6 +339,7 @@ class SomethingTrainer:
             for anything in self.anything_trainers:
                 anything.train(self.anything_steps)
         
+
         print("Done training all anythings")
 
     def _torchify_array(self, ndarray: np.ndarray, **kwargs) -> th.Tensor:
