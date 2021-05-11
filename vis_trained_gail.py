@@ -9,10 +9,12 @@ from imitation.algorithms import adversarial, bc
 from stable_baselines3 import PPO
 
 
-venv = util.make_vec_env('MiniGrid-LavaCrossingS9N1-v0', n_envs=1, post_wrappers= [wrappers.FlatObsWrapper])
+venv = util.make_vec_env("MiniGrid-Empty-Random-6x6-v0", n_envs=1, post_wrappers= [wrappers.FlatObsWrapper],  post_wrappers_kwargs=[{}],)
 
-trained_policy = bc.reconstruct_policy("lava_bc_warmstart.pt")
+# trained_policy = bc.reconstruct_policy("bc_empty_warmstart_policy.pt")
 # trained_policy = PPO.load("ppo_minigrid_empty")
+trained_policy = PPO.load("empty_gail_gen_5")
+
 # gail_trained_policy = PPO.load("something_gen")
 
 

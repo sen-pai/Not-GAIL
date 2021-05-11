@@ -142,7 +142,6 @@ reset()
 # Blocking event loop
 window.show(block=True)
 
-
 with open('lava_ideal.pkl', 'wb') as handle:
     pickle.dump(traj_dataset, handle, protocol=pickle.HIGHEST_PROTOCOL)
     print("wrote to pkl")

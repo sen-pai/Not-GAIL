@@ -15,6 +15,7 @@ src/imitation/algorithms/anything_module.py
 src/imitation/algorithms/bc.py
 src/imitation/algorithms/dagger.py
 src/imitation/algorithms/density_baselines.py
+src/imitation/algorithms/rnn_adversarial.py
 src/imitation/algorithms/something_module.py
 src/imitation/algorithms/tabular_irl.py
 src/imitation/analysis/__init__.py
@@ -49,6 +50,7 @@ src/imitation/rewards/common.py
 src/imitation/rewards/discrim_nets.py
 src/imitation/rewards/neg_discrim_nets.py
 src/imitation/rewards/reward_nets.py
+src/imitation/rewards/rnn_discrim_nets.py
 src/imitation/rewards/serialize.py
 src/imitation/scripts/__init__.py
 src/imitation/scripts/analyze.py
