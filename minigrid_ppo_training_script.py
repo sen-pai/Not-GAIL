@@ -8,7 +8,6 @@ import matplotlib.pyplot as plt
 import gym
 import gym_minigrid
 from gym_minigrid import wrappers
-from numpy.core.fromnumeric import transpose
 
 from stable_baselines3 import PPO
 from stable_baselines3.common.callbacks import (
@@ -62,8 +61,8 @@ parser.add_argument(
     "--show", default=False, help="See a sample image obs", action="store_true",
 )
 
-
 args = parser.parse_args()
+
 
 def get_env(n_envs=args.nenvs):
 
