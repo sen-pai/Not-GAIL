@@ -3,6 +3,15 @@ To install each library here use ``pip install -e``
 
 Make sure you are not using python 3.9, I faced many installation problems with it. Python 3.7 or 3.8 is better.
 
+
+#### Scripts
+
+``python .\minigrid_ppo_training_script.py -e MiniGrid-Empty-Random-6x6-v0 -r cnn_1 --seed 1 --show``
+
+``python .\minigrid_traj_collection_script.py -e MiniGrid-Empty-Random-6x6-v0 -r cnn_1 -s test_traj_collection --ntraj 20 --render``
+
+
+
 #### New files added for Anything
 ``libraries\imitation\src\imitation\algorithms\anything_module.py``\
 ``libraries\imitation\src\imitation\rewards\neg_discrim_nets.py``
