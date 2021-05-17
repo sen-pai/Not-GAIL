@@ -1,13 +1,10 @@
 # import os
-import numpy as np
 
 import argparse
 
-import matplotlib.pyplot as plt
 
 import gym
 import gym_minigrid
-from gym_minigrid import wrappers
 
 from stable_baselines3 import PPO
 from stable_baselines3.common.callbacks import (
@@ -17,9 +14,7 @@ from stable_baselines3.common.callbacks import (
     StopTrainingOnRewardThreshold,
 )
 
-
-from stable_baselines3.common.env_util import make_vec_env
-from stable_baselines3.common.vec_env import VecTransposeImage
+from bac_utils.env_utils import minigrid_get_env, minigrid_render
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
@@ -63,37 +58,19 @@ parser.add_argument(
 
 args = parser.parse_args()
 
-
-def get_env(n_envs=args.nenvs):
-
-    img_wrappers = lambda env: wrappers.ImgObsWrapper(wrappers.RGBImgObsWrapper(env))
-    flat_wrapper = lambda env: wrappers.FlatObsWrapper(env)
-
-    vec_env = make_vec_env(
-        env_id=args.env,
-        n_envs=n_envs,
-        wrapper_class=flat_wrapper if args.flat else img_wrappers,
-    )
-
-    if args.flat:
-        return vec_env
-    return VecTransposeImage(vec_env)
-
-
-train_env = get_env()
-eval_env = get_env(1)
+train_env = minigrid_get_env(args.env, args.nenvs, args.flat)
+eval_env = minigrid_get_env(args.env, 1, args.flat)
 
 if args.show and not args.flat:
-    plt.imshow(np.moveaxis(train_env.reset()[0], 0, -1))
-    plt.show()
+    minigrid_render(train_env.reset())
 
-save_path = "./logs/" + args.env + "/" + args.run
+save_path = "./logs/" + args.env + "/ppo/" + args.run
 
 checkpoint_callback = CheckpointCallback(save_freq=1000, save_path=save_path)
 callback_on_best = StopTrainingOnRewardThreshold(reward_threshold=0.98, verbose=1)
 eval_callback = EvalCallback(
     eval_env,
-    best_model_save_path=None,
+    best_model_save_path=save_path + "/best_model",
     log_path=save_path + "/eval_results",
     eval_freq=1000,
     callback_on_new_best=callback_on_best,

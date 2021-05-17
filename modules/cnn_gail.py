@@ -46,6 +46,8 @@ class CNNGAIL(AdversarialTrainer):
             discrim = discrim_nets.DiscrimNetGAIL(
                 venv.observation_space, venv.action_space, discrim_net=ActObsCNN, **discrim_kwargs
             )
+
+        logging.info("using CNN GAIL")
         super().__init__(
             venv, gen_algo, discrim, expert_data, expert_batch_size, **kwargs
         )
