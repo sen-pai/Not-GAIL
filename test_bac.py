@@ -77,54 +77,17 @@ args = parser.parse_args()
 
 train_env = minigrid_get_env(args.env, args.nenvs, args.flat)
 
-if args.show and not args.flat:
-    plt.imshow(np.moveaxis(train_env.reset()[0], 0, -1))
-    plt.show()
-
-save_path = "./logs/" + args.env + "/bc/" + args.run + "/"
-os.makedirs(save_path, exist_ok=True)
 traj_dataset_path = "./traj_datasets/" + args.traj_name + ".pkl"
 
 print(f"Expert Dataset: {args.traj_name}")
-
-policy_type = ActorCriticPolicy if args.flat else ActorCriticCnnPolicy
 
 with open(traj_dataset_path, "rb") as f:
     trajectories = pickle.load(f)
 
 transitions = rollout.flatten_trajectories(trajectories)
 
-logger.configure(args.save_name)
-bc_trainer = bc.BC(
-    train_env.observation_space,
-    train_env.action_space,
-    is_image=False,
-    expert_data=transitions,
-    loss_type="original",
-    policy_class=policy_type,
-)
-bc_trainer.train(n_epochs=args.nepochs)
-os.chdir(save_path)
-bc_trainer.save_policy(args.save_name + ".pt")
-
-if args.vis_trained:
-    for traj in range(10):
-        obs = train_env.reset()
-        train_env.render()
-        for i in range(40):
-            action, _ = bc_trainer.policy.predict(obs, deterministic=True)
-
-            obs, reward, done, info = train_env.step(action)
-            train_env.render()
-            if done:
-                break
-
-print(f"Weights Saved at {save_path}")
-
-
 bac_class = ActObsCNN(action_space=train_env.action_space, observation_space=train_env.observation_space).to('cuda')
 
-print(bac_class.device())
-bac_trainer = BaC(train_env, eval_env = None, bc_trainer=bc_trainer, bac_classifier=bac_class, expert_data=transitions)
+bac_trainer = BaC(train_env, eval_env = None, bc_trainer=None, bac_classifier=bac_class, expert_data=transitions)
 
 bac_trainer.train_bac_classifier()
