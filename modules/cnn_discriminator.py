@@ -23,12 +23,20 @@ class ActObsCNN(nn.Module):
             self.cnn_feature_extractor.features_dim
             + preprocessing.get_flattened_obs_dim(action_space)
         )
+        print(in_size)
         self.mlp = networks.build_mlp(
             **{"in_size": in_size, "out_size": 1, "hid_sizes": (32, 32), **mlp_kwargs}
         )
 
     def forward(self, obs: th.Tensor, acts: th.Tensor) -> th.Tensor:
         obs_features = self.cnn_feature_extractor(obs)
+        # acts = acts.view(-1, 1)
         cat_inputs = th.cat((obs_features, acts), dim=1)
+        # print(cat_inputs.shape)
         outputs = self.mlp(cat_inputs)
         return outputs.squeeze(1)
+
+    def device(self) -> th.device:
+        """Heuristic to determine which device this module is on."""
+        first_param = next(self.parameters())
+        return first_param.device

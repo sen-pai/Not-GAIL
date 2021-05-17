@@ -31,16 +31,17 @@ from typing import Callable, Dict, Iterable, Mapping, Optional, Type, Union
 import gym
 import numpy as np
 import torch as th
+import torch.nn as nn
 import torch.utils.data as th_data
 import torch.utils.tensorboard as thboard
-import tqdm
+from tqdm import tqdm
 from stable_baselines3.common import on_policy_algorithm, preprocessing, vec_env
 
 from imitation.data import buffer, types, wrappers
 from imitation.rewards import common as rew_common
 from imitation.rewards import discrim_nets, reward_nets
 from imitation.util import logger, reward_wrapper, util
-
+from imitation.data import rollout
 
 class BaC:
     def __init__(
@@ -51,6 +52,7 @@ class BaC:
         bac_classifier,
         expert_data,
         expert_batch_size: int = 32,
+        nepochs: int = 1000,
     ):
 
         self.train_env = train_env  # pass an instance of the environment
@@ -67,6 +69,11 @@ class BaC:
         self.expert_dataloader = self.trajectory_dataset_to_dataloader(
             expert_data, expert_batch_size
         )
+
+        self.bac_optimizer = th.optim.Adam(self.bac_classifier.parameters())
+        self.bac_loss = nn.BCEWithLogitsLoss()
+
+        self.nepochs = nepochs
 
     def trajectory_dataset_to_dataloader(self, dataset, batch_size):
         if isinstance(dataset, types.Transitions):
@@ -98,8 +105,8 @@ class BaC:
             for _ in range(50):
                 action = self.train_env.action_space.sample()
 
-                obs, _, done, _ = self.train_env.step(action)
-                action_list.append(action[0])
+                obs, _, done, _ = self.train_env.step([action])
+                action_list.append(action)
                 obs_list.append(obs[0])
 
                 if done:
@@ -112,53 +119,84 @@ class BaC:
                     infos=np.array([{} for i in action_list]),
                 )
             )
+        self.not_expert_dataset = rollout.flatten_trajectories(self.not_expert_dataset)
 
     def train_bac_classifier(self):
         # get not expert batches
         self.collect_not_expert()
-        self.not_expert_data_loader = self.trajectory_dataset_to_dataloader(
+        
+        self.not_expert_dataloader = self.trajectory_dataset_to_dataloader(
             self.not_expert_dataset, self.expert_batch_size
         )
 
         print("not expert data collected")
 
-    
+        for i in tqdm(range(self.nepochs)):
+            batch = self.make_train_batch()
+            logits = self.bac_classifier(batch['state'], batch['action'])
+            loss = self.bac_loss(logits, batch['labels_expert_is_one'].float())
+            self.bac_optimizer.zero_grad()
+            loss.backward()
+            self.bac_optimizer.step()
+
+            print(loss.data)
+        
+        print("bac training done")
+
+    def save(self, save_path, save_name):
+        os.chdir(save_path)
+        th.save(self.bac_classifier.state_dict(), )
+        
+
+    def _torchify_array(self, ndarray: np.ndarray, **kwargs) -> th.Tensor:
+        return th.as_tensor(ndarray, device=self.bac_classifier.device(), **kwargs)
+
+    def _torchify_with_space(
+        self, ndarray: np.ndarray, space: gym.Space, **kwargs
+    ) -> th.Tensor:
+        tensor = th.as_tensor(ndarray, device=self.bac_classifier.device(), **kwargs)
+        preprocessed = preprocessing.preprocess_obs(
+            tensor,
+            space,
+            normalize_images=False,
+        )
+        return preprocessed
 
     def make_train_batch(self) -> dict:
 
         expert_samples = dict(next(self.expert_dataloader))
-        gen_samples = dict(next(self.not_expert_data_loader))
+        not_expert_samples = dict(next(self.not_expert_dataloader))
 
         # Convert applicable Tensor values to NumPy.
         for field in dataclasses.fields(types.Transitions):
             k = field.name
             if k == "infos":
                 continue
-            for d in [gen_samples, expert_samples]:
+            for d in [not_expert_samples, expert_samples]:
                 if isinstance(d[k], th.Tensor):
                     d[k] = d[k].detach().numpy()
-        assert isinstance(gen_samples["obs"], np.ndarray)
+        assert isinstance(not_expert_samples["obs"], np.ndarray)
         assert isinstance(expert_samples["obs"], np.ndarray)
 
         # Concatenate rollouts, and label each row as expert or generator.
-        obs = np.concatenate([expert_samples["obs"], gen_samples["obs"]])
-        acts = np.concatenate([expert_samples["acts"], gen_samples["acts"]])
-        next_obs = np.concatenate([expert_samples["next_obs"], gen_samples["next_obs"]])
-        dones = np.concatenate([expert_samples["dones"], gen_samples["dones"]])
-        labels_gen_is_one = np.concatenate(
-            [np.zeros(n_expert, dtype=int), np.ones(n_gen, dtype=int)]
+        obs = np.concatenate([expert_samples["obs"], not_expert_samples["obs"]])
+        acts = np.concatenate([expert_samples["acts"], not_expert_samples["acts"]])
+        next_obs = np.concatenate([expert_samples["next_obs"], not_expert_samples["next_obs"]])
+        dones = np.concatenate([expert_samples["dones"], not_expert_samples["dones"]])
+        labels_expert_is_one = np.concatenate(
+            [
+                np.ones(self.expert_batch_size, dtype=int),
+                np.zeros(self.expert_batch_size, dtype=int),
+            ]
         )
 
         batch_dict = {
-            "state": self._torchify_with_space(obs, self.discrim.observation_space),
-            "action": self._torchify_with_space(acts, self.discrim.action_space),
-            "next_state": self._torchify_with_space(
-                next_obs, self.discrim.observation_space
-            ),
+            "state": self._torchify_with_space(obs, self.train_env.observation_space),
+            "action": self._torchify_with_space(acts, self.train_env.action_space),
+            "next_state": self._torchify_with_space(next_obs, self.train_env.observation_space),
             "done": self._torchify_array(dones),
-            "labels_gen_is_one": self._torchify_array(labels_gen_is_one),
+            "labels_expert_is_one": self._torchify_array(labels_expert_is_one),
         }
 
         return batch_dict
-
 
