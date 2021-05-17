@@ -9,9 +9,12 @@ class CrossingEnv(MiniGridEnv):
     Environment with wall or lava obstacles, sparse reward.
     """
 
-    def __init__(self, size=9, num_crossings=1, obstacle_type=Lava, seed=None):
+    def __init__(self, size=9, num_crossings=1, obstacle_type=Lava, seed=None, agent_start_random=False):
         self.num_crossings = num_crossings
         self.obstacle_type = obstacle_type
+
+        self.agent_start_random = agent_start_random
+
         super().__init__(
             grid_size=size,
             max_steps=4*size*size,
@@ -76,6 +79,9 @@ class CrossingEnv(MiniGridEnv):
                 assert False
             self.grid.set(i, j, None)
 
+        if self.agent_start_random:
+            self.place_agent()
+
         self.mission = (
             "avoid the lava and get to the green goal square"
             if self.obstacle_type == Lava
@@ -85,6 +91,10 @@ class CrossingEnv(MiniGridEnv):
 class LavaCrossingEnv(CrossingEnv):
     def __init__(self):
         super().__init__(size=9, num_crossings=1)
+
+class LavaCrossingEnvRandom(CrossingEnv):
+    def __init__(self):
+        super().__init__(size=9, num_crossings=1, agent_start_random=True)
 
 class LavaCrossingS9N2Env(CrossingEnv):
     def __init__(self):
@@ -101,6 +111,11 @@ class LavaCrossingS11N5Env(CrossingEnv):
 register(
     id='MiniGrid-LavaCrossingS9N1-v0',
     entry_point='gym_minigrid.envs:LavaCrossingEnv'
+)
+
+register(
+    id='MiniGrid-LavaCrossing-Random-v0',
+    entry_point='gym_minigrid.envs:LavaCrossingEnvRandom'
 )
 
 register(

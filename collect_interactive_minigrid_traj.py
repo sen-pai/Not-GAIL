@@ -49,18 +49,20 @@ def reset():
     redraw(obs)
 
 def step(action, action_int):
-    global obs_list, action_list, info_list, traj_dataset
+    global obs_list, action_list, info_list, traj_dataset, cnt
     obs, reward, done, info = env.step(action)
     action_list.append(action_int)
     info_list.append(info)
     obs_list.append(obs)
-    print(obs.shape)
-    print('step=%s, reward=%.2f' % (env.step_count, reward))
+    # print(obs.shape)
+    # print('step=%s, reward=%.2f' % (env.step_count, reward))
 
     if done:
         print('done!')
-        print(len(action_list), len(obs_list))
+        # print(len(action_list), len(obs_list))
         traj_dataset.append(Trajectory(obs = np.array(obs_list), acts= np.array(action_list), infos = np.array(info_list)))
+        cnt+=1
+        print(cnt)
         reset()
     else:
         redraw(obs)
@@ -105,7 +107,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument(
     "--env",
     help="gym environment to load",
-    default='MiniGrid-LavaCrossingS9N1-v0'
+    default='MiniGrid-LavaCrossing-Random-v0'
 )
 parser.add_argument(
     "--seed",
@@ -126,7 +128,7 @@ parser.add_argument(
     action='store_true'
 )
 
-
+cnt = 0
 args = parser.parse_args()
 
 env = gym.make(args.env)
@@ -143,6 +145,6 @@ reset()
 window.show(block=True)
 
 
-with open('lava_ideal.pkl', 'wb') as handle:
+with open('trajectories/lava_crossing9_closestlava.pkl', 'wb') as handle:
     pickle.dump(traj_dataset, handle, protocol=pickle.HIGHEST_PROTOCOL)
     print("wrote to pkl")

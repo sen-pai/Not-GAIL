@@ -18,34 +18,43 @@ from gym.wrappers.frame_stack import FrameStack
 # env = wrappers.ImgObsWrapper(env)
 
 
-# venv = util.make_vec_env('MiniGrid-Empty-Random-6x6-v0', n_envs=1, post_wrappers= [wrappers.RGBImgObsWrapper, wrappers.ImgObsWrapper])
-env = util.make_vec_env('MiniGrid-Empty-Random-6x6-v0', n_envs=1, post_wrappers= [wrappers.FlatObsWrapper, FrameStack], post_wrappers_kwargs=[{}, {"num_stack":10}])
+env = util.make_vec_env('MiniGrid-Empty-Random-6x6-v0', n_envs=1, post_wrappers= [wrappers.FlatObsWrapper], post_wrappers_kwargs=[{}])
+# env = util.make_vec_env('MiniGrid-Empty-Random-6x6-v0', n_envs=1, post_wrappers= [wrappers.FullyObsWrapper, wrappers.FlatObsWrapper], post_wrappers_kwargs=[{},{}])
 
-# env = VecTransposeImage(venv)
-# env = VecTransposeImage(DummyVecEnv(env))
 
-model = PPO.load("ppo_stack4_minigrid_empty")
+model = PPO.load("ppo_minigrid_empty")
+# model = PPO.load("ppo_minigrid_empty_fully_obs")
 
 print(env.reset().shape)
 traj_dataset = []
-for traj in range(30):
+for traj in range(50):
     obs_list = []
     action_list = []
     info_list = []
     obs = env.reset()
-    print(obs.shape)
+
+    # env.render()
+    # x = input()
+
     obs_list.append(obs.reshape(-1))
-    for i in range(500):
+
+    for i in range(100):
         action, _state = model.predict(obs, deterministic=True)
         obs, reward, done, info = env.step(action)
         action_list.append(action[0])
         info_list.append({})
         obs_list.append(obs.reshape(-1))
+
         # env.render()
+        # print(action)
+        # x=input()
+
         if done:
             break
+
+    # print(len(obs_list), len(action_list))
     traj_dataset.append(Trajectory(obs = np.array(obs_list), acts= np.array(action_list), infos = np.array(info_list)))
 
 
-with open('empty_6_stack4.pkl', 'wb') as handle:
+with open('trajectories/empty_6_fully_obs.pkl', 'wb') as handle:
     pickle.dump(traj_dataset, handle, protocol=pickle.HIGHEST_PROTOCOL)

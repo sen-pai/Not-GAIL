@@ -335,16 +335,16 @@ class DiscrimNetGAIL(DiscrimNet):
         )
 
         if discrim_net is None:
-            # self.discriminator = ActObsMLP(
+            self.discriminator = ActObsMLP(
+                action_space=action_space,
+                observation_space=observation_space,
+                hid_sizes=(64, 64),
+            )
+            # self.discriminator = ObsMLP(
             #     action_space=action_space,
             #     observation_space=observation_space,
             #     hid_sizes=(32, 32),
             # )
-            self.discriminator = ObsMLP(
-                action_space=action_space,
-                observation_space=observation_space,
-                hid_sizes=(32, 32),
-            )
             
         else:
             self.discriminator = discrim_net
@@ -365,6 +365,8 @@ class DiscrimNetGAIL(DiscrimNet):
         predicting expert.
         """
         logits = self.discriminator(state, action)
+        # print(state,action)
+        # print(logits)
         return logits
 
     def reward_test(
@@ -386,6 +388,7 @@ class DiscrimNetGAIL(DiscrimNet):
         done: th.Tensor,
     ) -> th.Tensor:
         logits = self.logits_gen_is_high(state, action, next_state, done)
-        rew = -F.logsigmoid(logits)
+        # print("Attempt:",logits)
+        rew = -logits#-F.tanh(logits)#-F.logsigmoid(logits)
         assert rew.shape == state.shape[:1]
         return rew

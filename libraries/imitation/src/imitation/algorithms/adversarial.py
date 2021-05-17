@@ -275,12 +275,18 @@ class AdversarialTrainer:
             learn_kwargs = {}
 
         with logger.accumulate_means("gen"):
-            self.gen_algo.learn(
-                total_timesteps=total_timesteps,
-                reset_num_timesteps=False,
-                callback=self.gen_callback,
-                **learn_kwargs,
-            )
+            # self.gen_algo.learn(
+            #     total_timesteps=total_timesteps,
+            #     reset_num_timesteps=False,
+            #     callback=self.gen_callback,
+            #     **learn_kwargs,
+            # )
+
+            for i in range(total_timesteps):
+                act = np.array([self.venv_train.action_space.sample()])
+                # print(act)
+                self.venv_train.step(act)
+            
             self._global_step += 1
 
         gen_samples = self.venv_buffering.pop_transitions()
