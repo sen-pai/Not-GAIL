@@ -19,7 +19,7 @@ import gym_minigrid
 from stable_baselines3.common.policies import ActorCriticCnnPolicy, ActorCriticPolicy
 
 
-from modules.cnn_discriminator import ActObsCNN
+from modules.rnn_discriminator import ActObsCRNN
 from imitation.algorithms import bc
 import msvcrt
 from BaC.bac import BaC
@@ -85,52 +85,55 @@ print(f"Expert Dataset: {args.traj_name}")
 with open(traj_dataset_path, "rb") as f:
     trajectories = pickle.load(f)
 
-transitions = rollout.flatten_trajectories(trajectories)
+# transitions = rollout.flatten_trajectories(trajectories)
 
-bac_class = ActObsCNN(
+bac_class = ActObsCRNN(
     action_space=train_env.action_space, observation_space=train_env.observation_space
 ).to("cuda")
 
-bac_trainer = BaC(
-    train_env,
-    eval_env=None,
-    bc_trainer=None,
-    bac_classifier=bac_class,
-    expert_data=transitions,
-)
 
-bac_trainer.train_bac_classifier()
+for traj in trajectories:
+    print(bac_class(traj))
+# bac_trainer = BaC(
+#     train_env,
+#     eval_env=None,
+#     bc_trainer=None,
+#     bac_classifier=bac_class,
+#     expert_data=transitions,
+# )
+
+# bac_trainer.train_bac_classifier()
 
 
-x = ""
-while x != "n":
-    train_env.render()
-    x = msvcrt.getwch()
+# x = ""
+# while x != "n":
+#     train_env.render()
+#     x = msvcrt.getwch()
 
-    if x == "a":
-        action = [0]
-    elif x == "d":
-        action = [1]
-    elif x == "n":
-        break
-    elif x == "w":
-        action = [2]
-    else:
-        action = [int(x)]
+#     if x == "a":
+#         action = [0]
+#     elif x == "d":
+#         action = [1]
+#     elif x == "n":
+#         break
+#     elif x == "w":
+#         action = [2]
+#     else:
+#         action = [int(x)]
 
-    n_obs, reward, done, info = train_env.step(action)
+#     n_obs, reward, done, info = train_env.step(action)
 
-    rew = bac_trainer.predict(
-        np.expand_dims(n_obs[0], axis=0), np.expand_dims(np.array(action[0]), axis=0),
-    ).data
+#     rew = bac_trainer.predict(
+#         np.expand_dims(n_obs[0], axis=0), np.expand_dims(np.array(action[0]), axis=0),
+#     ).data
 
-    if rew>0.001:
-        rew = - rew
-    else:
-        rew = 0
-    print(action, rew)
-    obs = n_obs
-    if done:
-        print("done")
-        obs = train_env.reset()
-        tot_rew = 0
+#     if rew>0.001:
+#         rew = - rew
+#     else:
+#         rew = 0
+#     print(action, rew)
+#     obs = n_obs
+#     if done:
+#         print("done")
+#         obs = train_env.reset()
+#         tot_rew = 0
