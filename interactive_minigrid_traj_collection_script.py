@@ -26,13 +26,6 @@ parser.add_argument(
 )
 parser.add_argument("--save-name", "-s", help="Run name", default="saved_testing")
 
-parser.add_argument(
-    "--max-timesteps", "-t", type=int, help="cut traj at max timestep", default=50
-)
-
-parser.add_argument(
-    "--ntraj", type=int, help="number of trajectories to collect", default=10
-)
 
 parser.add_argument(
     "--flat",
@@ -86,14 +79,17 @@ def reset():
 
 
 def step(action_int):
-    global obs_list, action_list, traj_dataset
-    obs, reward, done, _ = env.step([action_int])
-    action_list.append(action_int)
+    done = False
+    if action_int != -1:
+        
+        global obs_list, action_list, traj_dataset
+        obs, reward, done, _ = env.step([action_int])
+        action_list.append(action_int)
 
-    obs_list.append(obs[0])
-    print("reward=%.2f" % (reward))
+        obs_list.append(obs[0])
+        print("reward=%.2f" % (reward))
 
-    if done:
+    if done or action_int == -1:
         print("done!")
         print(len(action_list), len(obs_list))
         traj_dataset.append(
@@ -116,7 +112,7 @@ def key_handler(event):
         return
 
     if event.key == "backspace":
-        reset()
+        step(-1)
         return
 
     if event.key == "left":

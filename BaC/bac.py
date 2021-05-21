@@ -53,7 +53,7 @@ class BaC:
         bac_classifier,
         expert_data,
         expert_batch_size: int = 32,
-        nepochs: int = 10,
+        nepochs: int = 20,
     ):
 
         self.train_env = train_env  # pass an instance of the environment
@@ -146,7 +146,9 @@ class BaC:
         self.bac_classifier.train()
 
         for i in tqdm(range(self.nepochs)):
-            filter = False if i ==0 else True
+            # filter = False if i ==0 else True
+            filter = False
+            
             self.collect_not_expert(filter=filter)
             for j in range(100):
                 batch = self.make_train_batch()

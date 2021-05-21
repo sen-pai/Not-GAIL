@@ -2,7 +2,7 @@ import gym
 import numpy as np
 import torch as th
 from torch import nn
-
+from torch.nn.utils.rnn import pad_sequence, pack_padded_sequence
 from imitation.util import networks
 from imitation.data.types import Trajectory
 from imitation.data import rollout
@@ -28,14 +28,15 @@ class ActObsCRNN(nn.Module):
             + preprocessing.get_flattened_obs_dim(action_space)
         )
         
-        self.rnn = nn.LSTM(
+        self.rnn = nn.Sequential(
+            nn.LSTM(
             input_size = self.in_size,
             hidden_size = self.in_size,
             num_layers = 1,
             bidirectional=False,
             batch_first=True,
+            )
         )
-
         
         self.mlp = networks.build_mlp(
             **{"in_size": self.in_size, "out_size": 1, "hid_sizes": (32, 32), **mlp_kwargs}
@@ -58,24 +59,44 @@ class ActObsCRNN(nn.Module):
         transitions = rollout.flatten_trajectories([trajectory])
         obs = self._torchify_with_space(transitions.obs, self.observation_space)
         acts = self._torchify_with_space(transitions.acts, self.action_space)
-        # print(transitions.acts.shape)
-        # print(transitions.obs.shape)
+        
         return obs, acts
 
 
-    def forward(self, trajectory:Trajectory) -> th.Tensor:
-        obs, acts = self.preprocess_trajectory(trajectory)
+    def forward(self, trajectory) -> th.Tensor:
+        
+        if isinstance(trajectory, list):
+            all_cat = []
 
-        obs_features = self.cnn_feature_extractor(obs)
-        # print(obs_features.shape)
-        # print(acts.shape)
-        cat_inputs = th.cat((obs_features, acts), dim=1)
+            for traj in trajectory:
+                obs, acts = self.preprocess_trajectory(traj)
 
-        cat_rnn_inputs = cat_inputs.view(1, -1, self.in_size) #batch, seq_len, feature_size
-        _, (hidden_state, _) = self.rnn(cat_rnn_inputs)
+                obs_features = self.cnn_feature_extractor(obs)
+                cat_inputs = th.cat((obs_features, acts), dim=1)
+                all_cat.append(cat_inputs)
 
-        outputs = self.mlp(hidden_state)
-        return outputs.squeeze(1)
+
+            lens = [x.shape[0] for x in all_cat]
+            padded_cat = pad_sequence(all_cat, batch_first=True, padding_value=0)
+            cat_rnn_inputs = pack_padded_sequence(
+            padded_cat, lens, enforce_sorted=False, batch_first=True
+            )
+            # cat_rnn_inputs = cat_inputs.view(1, -1, self.in_size) #batch, seq_len, feature_size
+            _, (hidden_state, _) = self.rnn(cat_rnn_inputs)
+
+            outputs = self.mlp(hidden_state)
+            return outputs.view(-1)
+        else:
+            obs, acts = self.preprocess_trajectory(trajectory)
+
+            obs_features = self.cnn_feature_extractor(obs)
+            cat_inputs = th.cat((obs_features, acts), dim=1)
+
+            cat_rnn_inputs = cat_inputs.view(1, -1, self.in_size) #batch, seq_len, feature_size
+            _, (hidden_state, _) = self.rnn(cat_rnn_inputs)
+
+            outputs = self.mlp(hidden_state)
+            return outputs.squeeze(1).squeeze(1)
 
     def device(self) -> th.device:
         """Heuristic to determine which device this module is on."""
