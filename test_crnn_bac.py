@@ -53,8 +53,6 @@ parser.add_argument(
     "--nepochs", type=int, help="number of epochs to train till", default=50
 )
 
-
-
 parser.add_argument(
     "--warm", "-w", default=False, help="Expert warm start", action="store_true",
 )
@@ -133,7 +131,7 @@ if args.bc:
         loss_type="original",
         policy_class=policy_type,
     )
-    bc_trainer.train(n_epochs=50)
+    bc_trainer.train(n_epochs=20)
 
     # for traj in range(10):
     #     obs = train_env.reset()
@@ -190,6 +188,8 @@ while x != "n":
         break
     elif x == "w":
         action = [2]
+    elif x == "e":
+        action = [3]
     elif x =="p":
         obs_list = [train_env.reset()[0]]
         action_list = []

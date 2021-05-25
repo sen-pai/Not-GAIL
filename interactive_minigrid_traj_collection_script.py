@@ -167,4 +167,4 @@ with open(pkl_save_path, "wb") as handle:
     pickle.dump(traj_dataset, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
 
-print(f"Trajectories saved at {pkl_save_path}")
+print(f"{len(traj_dataset)} trajectories saved at {pkl_save_path}")

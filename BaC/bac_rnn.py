@@ -198,7 +198,7 @@ class BaCRNN:
 
             for i in range(20):
                 # action = self.train_env.action_space.sample()
-                action = random.sample([0, 1, 2], 1)[0]
+                action = random.sample([0, 1, 2, 3], 1)[0]
                 # print(action)
 
                 obs, _, done, _ = self.train_env.step([action])
@@ -250,7 +250,7 @@ class BaCRNN:
                 if not ok_flag:
                     break
 
-                action = random.sample([0, 1, 2], 1)[0]
+                action = random.sample([0, 1, 2, 3], 1)[0]
                 obs, _, done, _ = self.train_env.step([action])
                 action_list.append(action)
                 obs_list.append(obs[0])
