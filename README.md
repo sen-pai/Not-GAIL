@@ -12,6 +12,18 @@ Make sure you are not using python 3.9, I faced many installation problems with 
 
 
 
+#### New Minigrid Envs
+* ``MiniGrid-KeyEmpty``: Similar to the empty grid with agent and key position randomized.
+    * Found in : ``gym_minigrid/envs/keyempty.py``
+    * Variants: 
+        * ``MiniGrid-KeyEmpty-16x16-v0``
+        * ``MiniGrid-KeyEmpty-8x8-v0``
+        * ``MiniGrid-KeyEmpty-6x6-v0``
+
+
+
+
+
 #### New files added for Anything
 ``libraries\imitation\src\imitation\algorithms\anything_module.py``\
 ``libraries\imitation\src\imitation\rewards\neg_discrim_nets.py``

@@ -24,6 +24,7 @@ gym_minigrid/envs/fourrooms.py
 gym_minigrid/envs/gotodoor.py
 gym_minigrid/envs/gotoobject.py
 gym_minigrid/envs/keycorridor.py
+gym_minigrid/envs/keyempty.py
 gym_minigrid/envs/lavagap.py
 gym_minigrid/envs/lockedroom.py
 gym_minigrid/envs/memory.py
