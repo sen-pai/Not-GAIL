@@ -6,7 +6,7 @@ import numpy as np
 import argparse
 
 import matplotlib.pyplot as plt
-
+import torch
 
 import pickle5 as pickle
 from imitation.data import rollout
@@ -72,9 +72,22 @@ parser.add_argument(
 )
 
 parser.add_argument(
+    "--bc", default=False, help="Train BC", action="store_true",
+)
+
+
+parser.add_argument(
     "--vis-trained",
     default=False,
     help="Render 10 traj of trained BC",
+    action="store_true",
+)
+
+parser.add_argument(
+    "--load",
+    "-l",
+    default=False,
+    help="Check loaded",
     action="store_true",
 )
 
@@ -82,7 +95,12 @@ parser.add_argument(
 args = parser.parse_args()
 print(args)
 
-train_env = minigrid_get_env(args.env, args.nenvs, args.flat)
+
+env_kwargs = {}
+# if "FourRooms" in args.env:
+#     env_kwargs = {"agent_pos": (3, 3), "goal_pos": (15, 15)}
+
+train_env = minigrid_get_env(args.env, args.nenvs, args.flat,  env_kwargs)
 
 traj_dataset_path = "./traj_datasets/" + args.traj_name + ".pkl"
 
@@ -102,24 +120,58 @@ bac_class = ActObsCRNN(
 ).to("cuda")
 
 
+if args.bc:
+    policy_type = ActorCriticPolicy if args.flat else ActorCriticCnnPolicy
+
+    transitions = rollout.flatten_trajectories(trajectories)
+
+    bc_trainer = bc.BC(
+        train_env.observation_space,
+        train_env.action_space,
+        is_image=False,
+        expert_data=transitions,
+        loss_type="original",
+        policy_class=policy_type,
+    )
+    bc_trainer.train(n_epochs=50)
+
+    # for traj in range(10):
+    #     obs = train_env.reset()
+    #     train_env.render()
+    #     for i in range(40):
+    #         action, _ = bc_trainer.policy.predict(obs, deterministic=True)
+
+    #         obs, reward, done, info = train_env.step(action)
+    #         train_env.render()
+    #         if done:
+    #             break
+    
+
+
+
+
 bac_trainer = BaCRNN(
     train_env,
     eval_env=None,
-    bc_trainer=None,
+    bc_trainer=bc_trainer if args.bc else None,
     bac_classifier=bac_class,
     expert_data=trajectories,
     # non_expert_data=bad_trajectories,
     nepochs=args.nepochs,
 )
 
-if args.warm:
-    bac_trainer.expert_warmstart()
+if args.load:
+    bac_trainer.bac_classifier.load_state_dict(torch.load("bac_weights/"+ args.save_name+".pt"))
+else:
+    if args.warm:
+        bac_trainer.expert_warmstart()
 
-bac_trainer.train_bac_classifier()
+    bac_trainer.train_bac_classifier()
 
+    bac_trainer.save("bac_weights", args.save_name+".pt")
 
-for traj in trajectories:
-    print(bac_trainer.predict(traj))
+    for traj in trajectories:
+        print(bac_trainer.predict(traj).item())
 
 obs_list = []
 action_list = []
@@ -159,12 +211,12 @@ while x != "n":
             acts=np.array(action_list),
             infos=np.array([{} for i in action_list]),
         )
-    ).data
+    ).item()
 
     if rew > 0.001:
         rew = -rew
-    # else:
-    #     rew = 0
+    else:
+        rew = 0
     print(action, rew)
     obs = n_obs
     if done:
@@ -173,3 +225,59 @@ while x != "n":
         obs_list = [obs[0]]
         action_list = []
         tot_rew = 0
+
+
+
+
+# obs_list = []
+# action_list = []
+# x = ""
+
+# obs_list.append(train_env.reset()[0])
+# while x != "n":
+#     train_env.render()
+#     x = msvcrt.getwch()
+
+#     if x == "a":
+#         action = [0]
+#     elif x == "d":
+#         action = [1]
+#     elif x == "n":
+#         break
+#     elif x == "w":
+#         action = [2]
+#     elif x =="p":
+#         obs_list = [train_env.reset()[0]]
+#         action_list = []
+#     elif x =="m":
+#         obs_list = [n_obs[0]]
+#         action_list = []
+    
+#     else:
+#         action = [int(x)]
+    
+
+#     action_list.append(action[0])
+#     n_obs, reward, done, info = train_env.step(action)
+
+#     obs_list.append(n_obs[0])
+#     rew = bac_trainer.predict(
+#         Trajectory(
+#             obs=np.array([n_obs[0]]),
+#             acts=np.array(action),
+#             infos=np.array([{}]),
+#         )
+#     ).data
+
+#     if rew > 0.001:
+#         rew = -rew
+#     # else:
+#     #     rew = 0
+#     print(action, rew)
+#     obs = n_obs
+#     if done:
+#         print("done")
+#         obs = train_env.reset()
+#         obs_list = [obs[0]]
+#         action_list = []
+#         tot_rew = 0

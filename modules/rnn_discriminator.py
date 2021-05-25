@@ -24,7 +24,7 @@ class ActObsCRNN(nn.Module):
         self.cnn_feature_extractor = NatureCNN(observation_space, features_dim=512)
         
         self.in_size = (
-            self.cnn_feature_extractor.features_dim
+            self.cnn_feature_extractor.features_dim 
             + preprocessing.get_flattened_obs_dim(action_space)
         )
         
@@ -37,7 +37,7 @@ class ActObsCRNN(nn.Module):
             batch_first=True,
             )
         )
-        
+
         self.mlp = networks.build_mlp(
             **{"in_size": self.in_size, "out_size": 1, "hid_sizes": (32, 32), **mlp_kwargs}
         )
@@ -49,9 +49,11 @@ class ActObsCRNN(nn.Module):
         self, ndarray: np.ndarray, space: gym.Space, **kwargs
     ) -> th.Tensor:
         tensor = th.as_tensor(ndarray, device=self.device(), **kwargs)
+        # print(ndarray)
         preprocessed = preprocessing.preprocess_obs(
-            tensor, space, normalize_images=False,
+            tensor, space, normalize_images=True,
         )
+        # print(f"pro {preprocessed}")
         return preprocessed
     
     def preprocess_trajectory(self, trajectory:Trajectory):

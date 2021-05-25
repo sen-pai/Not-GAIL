@@ -25,6 +25,11 @@ class CNNAutoEncoder(nn.Module):
         self.feature_dim = 512
         self.encoder = NatureCNN(observation_space, features_dim=self.feature_dim)
         
+
+        self.flatten_decoder = nn.Sequential(
+            
+        )
+
         self.decoder = nn.Sequential(
             nn.ConvTranspose2d(self.feature_dim, 128, kernel_size=5, stride=2),
             nn.ReLU(),
@@ -44,7 +49,7 @@ class CNNAutoEncoder(nn.Module):
     ) -> th.Tensor:
         tensor = th.as_tensor(ndarray, device=self.device(), **kwargs)
         preprocessed = preprocessing.preprocess_obs(
-            tensor, space, normalize_images=False,
+            tensor, space, normalize_images=True,
         )
         return preprocessed
 

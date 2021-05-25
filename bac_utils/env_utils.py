@@ -10,7 +10,7 @@ from stable_baselines3.common.vec_env import VecTransposeImage
 
 
 
-def minigrid_get_env(env, n_envs, flat = False):
+def minigrid_get_env(env, n_envs, flat = False, env_kwargs={}):
 
     img_wrappers = lambda env: wrappers.ImgObsWrapper(wrappers.RGBImgObsWrapper(env))
     flat_wrapper = lambda env: wrappers.FlatObsWrapper(env)
@@ -19,6 +19,7 @@ def minigrid_get_env(env, n_envs, flat = False):
         env_id=env,
         n_envs=n_envs,
         wrapper_class=flat_wrapper if flat else img_wrappers,
+        env_kwargs=env_kwargs
     )
 
     if flat:

@@ -50,7 +50,11 @@ args = parser.parse_args()
 print("After you are done, click ESC to write the data, dont just close the window.")
 
 
-env = minigrid_get_env(args.env, 1, args.flat)
+env_kwargs = {}
+if "FourRooms" in args.env:
+    env_kwargs = {"agent_pos": (3, 3), "goal_pos": (15, 15)}
+
+env = minigrid_get_env(args.env, 1, args.flat, env_kwargs)
 
 pkl_save_path = "./traj_datasets/" + args.save_name + ".pkl"
 
@@ -81,7 +85,7 @@ def reset():
 def step(action_int):
     done = False
     if action_int != -1:
-        
+
         global obs_list, action_list, traj_dataset
         obs, reward, done, _ = env.step([action_int])
         action_list.append(action_int)
@@ -118,12 +122,12 @@ def key_handler(event):
     if event.key == "left":
         # step(env.actions.left, 0)
         step(0)
-        
+
         return
     if event.key == "right":
         # step(env.actions.right, 1)
         step(1)
-        
+
         return
     if event.key == "up":
         # step(env.actions.forward, 2)

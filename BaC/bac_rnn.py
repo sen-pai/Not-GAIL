@@ -51,12 +51,14 @@ class BaCRNN:
     def __init__(
         self,
         train_env,
-        bc_trainer,
         bac_classifier,
         expert_data,
+        bc_trainer=None,
         eval_env=None,
         not_expert_data=None,
+        loss_type = "bce",
         nepochs: int = 10,
+        batch_size: int = 10,
     ):
 
         self.train_env = train_env  # pass an instance of the environment
@@ -77,29 +79,42 @@ class BaCRNN:
             self.not_expert_dataloader = util.endless_iter(not_expert_data)
 
         self.bac_optimizer = th.optim.Adam(self.bac_classifier.parameters())
-        self.bac_loss = nn.BCEWithLogitsLoss()
+        
+        if loss_type == "bce":
+            self.bac_loss = nn.BCEWithLogitsLoss()
+        else:
+            self.bac_loss =nn.TripletMarginLoss(margin=1.0)
 
+        self.batch_size = batch_size
         self.nepochs = nepochs
         print(f"BaC will be trained for {100*nepochs} epochs")
 
     def train_bac_classifier(self):
+        if self.bc_trainer != None:
+            self.collect_not_expert_from_bc(filter = True)
+        self.collect_not_expert(filter = True)
+        self.collect_not_expert_from_expert(filter = True)
 
         for i in tqdm(range(self.nepochs)):
             full_loss = 0
 
-            if i %2 == 1:
-                self.collect_not_expert(filter = True)
-            else:
-                self.collect_not_expert_from_expert(filter = True)
-
-            # self.collect_not_expert()
             self.bac_classifier.train()
-            for j in range(2):
-                batch = [next(self.expert_dataloader) for i in range(5)]
-                batch.extend([next(self.not_expert_dataloader) for i in range(5)])
+            for j in range(10):
+
+                batch = [next(self.expert_dataloader) for i in range(self.batch_size)]
+                exp_labels = np.ones(self.batch_size, dtype=int)
+
+                if i % 2 == 0:
+                    if self.bc_trainer != None:
+                        batch.extend([next(self.not_expert_from_bc_dataloader) for i in range(self.batch_size)])
+                    else:
+                        batch.extend([next(self.not_expert_dataloader) for i in range(self.batch_size)])
+                else:
+                    batch.extend([next(self.not_expert_from_expert_dataloader) for i in range(self.batch_size)])
+                    
 
                 label = self._torchify_array(
-                    np.concatenate([np.ones(5, dtype=int), np.zeros(5, dtype=int),])
+                    np.concatenate([exp_labels, np.zeros(self.batch_size, dtype=int),])
                 )
 
                 logits = self.bac_classifier(batch)
@@ -108,17 +123,20 @@ class BaCRNN:
                 loss.backward()
                 self.bac_optimizer.step()
                 full_loss += loss.data
-            print(full_loss / 20)
+            print(full_loss / 10)
+
+            if self.earlystopping():
+                break
 
         print("bac training done")
 
     def expert_warmstart(self):
         self.bac_classifier.train()
 
-        print(f"warm start for {1000} epochs with batch size {5}")
+        print(f"warm start for {20} epochs with batch size {5}")
         for i in tqdm(range(10)):
             full_loss = 0
-            for j in range(10):
+            for j in range(2):
                 batch = [next(self.expert_dataloader) for i in range(5)]
 
                 label = self._torchify_array(np.ones(5, dtype=int))
@@ -128,22 +146,21 @@ class BaCRNN:
                 self.bac_optimizer.zero_grad()
                 loss.backward()
                 self.bac_optimizer.step()
-                full_loss += loss.data
+                full_loss += loss.item()
 
             print("expert only:", full_loss / 10)
 
         expert_probs_avg = 0
         for traj in self.expert_data:
-            expert_probs_avg += self.predict(traj)
+            expert_probs_avg += self.predict(traj).item()
 
         print(f"expert probs sanity check {expert_probs_avg/len(self.expert_data)}")
-
         print("bac warmstart done")
 
 
     def save(self, save_path, save_name):
         os.chdir(save_path)
-        th.save(self.bac_classifier.state_dict(),)
+        th.save(self.bac_classifier.state_dict(),save_name)
 
     def _torchify_array(self, ndarray: np.ndarray, **kwargs) -> th.Tensor:
         return th.as_tensor(ndarray, device=self.bac_classifier.device(), **kwargs)
@@ -173,13 +190,13 @@ class BaCRNN:
 
     def collect_not_expert(self, filter = False, cutoff = 0.9):
         self.not_expert_dataset = []
-        for _ in range(50):
+        for _ in range(500):
             obs_list = []
             action_list = []
             obs = self.train_env.reset()
             obs_list.append(obs[0])
 
-            for i in range(50):
+            for i in range(20):
                 # action = self.train_env.action_space.sample()
                 action = random.sample([0, 1, 2], 1)[0]
                 # print(action)
@@ -199,25 +216,69 @@ class BaCRNN:
                         infos=np.array([{} for i in action_list]),
                     )
                 if filter:
+                    # print(f"pred not {self.predict(collected_traj).item()}")
                     if self.predict(collected_traj) < cutoff:
                         self.not_expert_dataset.append(collected_traj)
                 else:
                     self.not_expert_dataset.append(collected_traj)
 
         print(f"not expert dataset size: {len(self.not_expert_dataset)}")
-        # if len(self.not_expert_dataset) > 5:
-
-        # self.not_expert_dataset = rollout.flatten_trajectories(self.not_expert_dataset)
         self.not_expert_dataloader = util.endless_iter(self.not_expert_dataset)
-        # print("done func")
-        # else:
-        #     print("sadasdasdsadasds")
-        #     self.not_expert_dataloader = util.endless_iter(self.not_expert_data)
+        
+    def collect_not_expert_from_bc(self, filter = False, cutoff = 0.9):
+        assert self.bc_trainer != None, "Need a trained BC" 
+        self.not_expert_from_bc_dataset = []
+        for _ in range(500):
+            obs_list = []
+            action_list = []
+            ok_flag = True
+            obs = self.train_env.reset()
+            obs_list.append(obs[0])
+
+            #bc rollout
+            for j in range(random.sample(list(range(5)), 1)[0]):
+                action, _ = self.bc_trainer.policy.predict(obs, deterministic=True)
+                obs, _, done, _ = self.train_env.step(action)
+                action_list.append(action[0])
+                obs_list.append(obs[0])
+                if done:
+                    ok_flag = False
+                    break
+            
+            #continue with random actions
+            for i in range(5):
+                if not ok_flag:
+                    break
+
+                action = random.sample([0, 1, 2], 1)[0]
+                obs, _, done, _ = self.train_env.step([action])
+                action_list.append(action)
+                obs_list.append(obs[0])
+
+                if done:
+                    break
+
+            if len(action_list) >= 1 and ok_flag:
+                collected_traj = Trajectory(
+                        obs=np.array(obs_list),
+                        acts=np.array(action_list),
+                        infos=np.array([{} for i in action_list]),
+                    )
+                if filter:
+                    if self.predict(collected_traj) < cutoff:
+                        self.not_expert_from_bc_dataset.append(collected_traj)
+                else:
+                    self.not_expert_from_bc_dataset.append(collected_traj)
+
+        print(f"not expert from bc dataset size: {len(self.not_expert_from_bc_dataset)}")
+
+        self.not_expert_from_bc_dataloader = util.endless_iter(self.not_expert_from_bc_dataset)
+
 
     def collect_not_expert_from_expert(self, filter = False, cutoff = 0.9):
-        self.not_expert_dataset = []
+        self.not_expert_from_expert_dataset = []
 
-        for _ in range(30):
+        for _ in range(200):
             expert_traj = copy.deepcopy(next(self.expert_dataloader))
             obs_list = expert_traj.obs.tolist()
             act_list = expert_traj.acts.tolist()
@@ -225,23 +286,53 @@ class BaCRNN:
             if len(act_list) < 5:
                 continue
 
-            for _ in range(random.sample([1, 2, 3, 4],1)[0]):
+            for _ in range(random.sample(list(range(3)),1)[0]):
                 del obs_list[-1]
                 del act_list[-1]
+                if len(act_list) < 2:
+                    break
 
-            collected_traj = Trajectory(
-                    obs=np.array(obs_list),
-                    acts=np.array(act_list),
-                    infos=np.array([{} for i in act_list]),
-                )
-            
-            if filter:
-                if self.predict(collected_traj) < cutoff:
-                    self.not_expert_dataset.append(collected_traj)
+
+            if len(act_list) >= 1:
+                collected_traj = Trajectory(
+                        obs=np.array(obs_list),
+                        acts=np.array(act_list),
+                        infos=np.array([{} for i in act_list]),
+                    )
+                
+                if filter:
+                    if self.predict(collected_traj) < cutoff:
+                        self.not_expert_from_expert_dataset.append(collected_traj)
                 else:
-                    self.not_expert_dataset.append(collected_traj)
+                    self.not_expert_from_expert_dataset.append(collected_traj)
         
-        print(f"not expert from expert dataset size: {len(self.not_expert_dataset)}")
+        print(f"not expert from expert dataset size: {len(self.not_expert_from_expert_dataset)}")
 
-        self.not_expert_dataloader = util.endless_iter(self.not_expert_dataset)
+        self.not_expert_from_expert_dataloader = util.endless_iter(self.not_expert_from_expert_dataset)
 
+
+    def earlystopping(self):
+        expert_probs_avg = 0
+        for traj in self.expert_data:
+            expert_probs_avg += self.predict(traj).item()
+
+        expert_probs_avg /= len(self.expert_data)
+        not_expert_probs_avg = 0
+        for traj in self.not_expert_dataset:
+            not_expert_probs_avg += self.predict(traj).item()
+        total_not_expert = len(self.not_expert_dataset)
+
+        if self.bc_trainer != None:
+            for traj in self.not_expert_from_bc_dataset:
+                not_expert_probs_avg += self.predict(traj).item()
+            total_not_expert += len(self.not_expert_from_bc_dataset)
+
+        for traj in self.not_expert_from_expert_dataset:
+            not_expert_probs_avg += self.predict(traj).item()
+        
+        not_expert_probs_avg /= (total_not_expert+ len(self.not_expert_from_expert_dataset))
+
+        print(f"earlystopping: expert = {expert_probs_avg} not expert = {not_expert_probs_avg}")
+        if expert_probs_avg > 0.95 and not_expert_probs_avg < 0.05:
+            return True
+        return False
