@@ -13,13 +13,13 @@ from imitation.util import logger, util
 from stable_baselines3 import PPO
 from stable_baselines3.common import policies
 
-with open("trajectories/lava_crossing9_closestlava.pkl", "rb") as f:
+with open("trajectories/empty_6_gotomiddle.pkl", "rb") as f:
     trajectories = pickle.load(f)
 
 transitions = rollout.flatten_trajectories(trajectories)
 
 venv = util.make_vec_env(
-    'MiniGrid-LavaCrossing-Random-v0',
+    'MiniGrid-Empty-Random-6x6-v0',
     n_envs=1,
     post_wrappers=[wrappers.FlatObsWrapper],
     post_wrappers_kwargs=[{}],
@@ -41,12 +41,12 @@ gail_trainer = adversarial.GAIL(
     expert_data=transitions,
     expert_batch_size=60,
     gen_algo=base_ppo,
-    n_disc_updates_per_round=2,
+    n_disc_updates_per_round=5,
     normalize_reward=False,
     normalize_obs=False
 )
 
-total_timesteps = 40000
+total_timesteps = 60000
 for i in range(10):
     gail_trainer.train(total_timesteps=total_timesteps//10)
     gail_trainer.gen_algo.save("gens/gail_gen_"+str(i))

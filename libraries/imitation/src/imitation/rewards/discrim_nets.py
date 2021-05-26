@@ -338,7 +338,7 @@ class DiscrimNetGAIL(DiscrimNet):
             self.discriminator = ActObsMLP(
                 action_space=action_space,
                 observation_space=observation_space,
-                hid_sizes=(64, 64),
+                hid_sizes=(128, 128),
             )
             # self.discriminator = ObsMLP(
             #     action_space=action_space,
@@ -391,4 +391,33 @@ class DiscrimNetGAIL(DiscrimNet):
         # print("Attempt:",logits)
         rew = -logits#-F.tanh(logits)#-F.logsigmoid(logits)
         assert rew.shape == state.shape[:1]
+        return rew
+
+    def mod_rew(
+        self,
+        state: np.ndarray,
+        action: np.ndarray,
+        next_state: np.ndarray,
+        done: np.ndarray,
+    ):
+        (
+            state,
+            action,
+            next_state,
+            done,
+        ) = rewards_common.disc_rew_preprocess_inputs(
+            observation_space=self.observation_space,
+            action_space=self.action_space,
+            state=state,
+            action=action,
+            next_state=next_state,
+            done=done,
+            device=self.device(),
+            scale=self.scale,
+        )
+
+        logits = self.logits_gen_is_high(state, action, next_state, done)
+        rew = -th.sigmoid(-logits)
+        assert rew.shape == state.shape[:1]
+        rew = rew.detach().cpu().numpy().flatten()
         return rew

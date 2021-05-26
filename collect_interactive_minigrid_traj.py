@@ -11,6 +11,8 @@ import gym_minigrid
 from gym_minigrid.wrappers import *
 from gym_minigrid.window import Window
 
+import random
+
 """
 After you are done, click ESC to write the data, dont just close the window. 
 """
@@ -51,13 +53,14 @@ def reset():
 def step(action, action_int):
     global obs_list, action_list, info_list, traj_dataset, cnt
     obs, reward, done, info = env.step(action)
+    # print(done)
     action_list.append(action_int)
     info_list.append(info)
     obs_list.append(obs)
     # print(obs.shape)
     # print('step=%s, reward=%.2f' % (env.step_count, reward))
 
-    if done:
+    if done or action == env.actions.done:
         print('done!')
         # print(len(action_list), len(obs_list))
         traj_dataset.append(Trajectory(obs = np.array(obs_list), acts= np.array(action_list), infos = np.array(info_list)))
@@ -107,7 +110,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument(
     "--env",
     help="gym environment to load",
-    default='MiniGrid-LavaCrossing-Random-v0'
+    default='MiniGrid-Empty-Random-6x6-v0'
 )
 parser.add_argument(
     "--seed",
@@ -145,6 +148,6 @@ reset()
 window.show(block=True)
 
 
-with open('trajectories/lava_crossing9_closestlava.pkl', 'wb') as handle:
+with open('trajectories/empty_6_gotomiddle.pkl', 'wb') as handle:
     pickle.dump(traj_dataset, handle, protocol=pickle.HIGHEST_PROTOCOL)
     print("wrote to pkl")
