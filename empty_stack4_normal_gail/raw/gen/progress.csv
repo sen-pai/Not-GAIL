@@ -1,0 +1,5 @@
+raw\gen\time/fps,raw\gen\time/total_timesteps,raw\gen\time/time_elapsed,raw\gen\time/iterations,raw\gen\rollout/ep_rew_mean,raw\gen\rollout/ep_len_mean,raw\gen\train/policy_gradient_loss,raw\gen\train/approx_kl,raw\gen\train/explained_variance,raw\gen\train/value_loss,raw\gen\train/entropy_loss,raw\gen\train/learning_rate,raw\gen\train/clip_range,raw\gen\train/clip_fraction,raw\gen\train/n_updates,raw\gen\train/loss,raw\gen\rollout/ep_rew_wrapped_mean
+472,100,0,1,,,,,,,,,,,,,
+716,200,0,1,0.0,144.0,-0.022396361089558923,0.02890918,-0.06146550178527832,2.718640733808279,-1.9429473328590392,0.0003,0.2,0.04700000084936619,10,0.5370196104049683,
+1026,300,0,1,0.0,144.0,-0.02925691922556144,0.015834305,-3.091392993927002,0.07906122458633036,-1.9353543150424957,0.0003,0.2,0.06400000147521495,20,-0.07749372720718384,106.91379368305206
+1736,400,0,1,0.0,144.0,-0.03786999033373286,-0.002504032,-1.0815114974975586,0.1088515808340162,-1.9276189589500428,0.0003,0.2,0.10500000193715095,30,-0.0509352833032608,106.99829056859016

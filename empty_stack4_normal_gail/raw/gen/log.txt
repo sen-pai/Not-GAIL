@@ -1,0 +1,72 @@
+----------------------------
+| raw\gen\time/      |     |
+|    fps             | 472 |
+|    iterations      | 1   |
+|    time_elapsed    | 0   |
+|    total_timesteps | 100 |
+----------------------------
+----------------------------------------
+| raw\gen\rollout/        |            |
+|    ep_len_mean          | 144        |
+|    ep_rew_mean          | 0          |
+| raw\gen\time/           |            |
+|    fps                  | 716        |
+|    iterations           | 1          |
+|    time_elapsed         | 0          |
+|    total_timesteps      | 200        |
+| raw\gen\train/          |            |
+|    approx_kl            | 0.02890918 |
+|    clip_fraction        | 0.047      |
+|    clip_range           | 0.2        |
+|    entropy_loss         | -1.94      |
+|    explained_variance   | -0.0615    |
+|    learning_rate        | 0.0003     |
+|    loss                 | 0.537      |
+|    n_updates            | 10         |
+|    policy_gradient_loss | -0.0224    |
+|    value_loss           | 2.72       |
+----------------------------------------
+-----------------------------------------
+| raw\gen\rollout/        |             |
+|    ep_len_mean          | 144         |
+|    ep_rew_mean          | 0           |
+|    ep_rew_wrapped_mean  | 107         |
+| raw\gen\time/           |             |
+|    fps                  | 1026        |
+|    iterations           | 1           |
+|    time_elapsed         | 0           |
+|    total_timesteps      | 300         |
+| raw\gen\train/          |             |
+|    approx_kl            | 0.015834305 |
+|    clip_fraction        | 0.064       |
+|    clip_range           | 0.2         |
+|    entropy_loss         | -1.94       |
+|    explained_variance   | -3.09       |
+|    learning_rate        | 0.0003      |
+|    loss                 | -0.0775     |
+|    n_updates            | 20          |
+|    policy_gradient_loss | -0.0293     |
+|    value_loss           | 0.0791      |
+-----------------------------------------
+------------------------------------------
+| raw\gen\rollout/        |              |
+|    ep_len_mean          | 144          |
+|    ep_rew_mean          | 0            |
+|    ep_rew_wrapped_mean  | 107          |
+| raw\gen\time/           |              |
+|    fps                  | 1736         |
+|    iterations           | 1            |
+|    time_elapsed         | 0            |
+|    total_timesteps      | 400          |
+| raw\gen\train/          |              |
+|    approx_kl            | -0.002504032 |
+|    clip_fraction        | 0.105        |
+|    clip_range           | 0.2          |
+|    entropy_loss         | -1.93        |
+|    explained_variance   | -1.08        |
+|    learning_rate        | 0.0003       |
+|    loss                 | -0.0509      |
+|    n_updates            | 30           |
+|    policy_gradient_loss | -0.0379      |
+|    value_loss           | 0.109        |
+------------------------------------------

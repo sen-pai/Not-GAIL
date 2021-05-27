@@ -1,0 +1,86 @@
+Logging to empty_stack4_normal_gail
+--------------------------------------
+| mean\disc\disc_acc      | 0.5      |
+| mean\disc\disc_acc_e... | 1        |
+| mean\disc\disc_acc_gen  | 0        |
+| mean\disc\disc_loss     | 0.696    |
+| mean\disc\disc_propo... | 0.5      |
+| mean\disc\global_step   | 1        |
+| mean\disc\n_expert      | 10       |
+| mean\disc\n_generated   | 10       |
+| mean\gen\time/          |          |
+|    fps                  | 472      |
+|    iterations           | 1        |
+|    time_elapsed         | 0        |
+|    total_timesteps      | 100      |
+| mean\gen\train/         |          |
+|    approx_kl            | 0.0289   |
+|    clip_fraction        | 0.047    |
+|    clip_range           | 0.2      |
+|    entropy_loss         | -1.94    |
+|    explained_variance   | -0.0615  |
+|    learning_rate        | 0.0003   |
+|    loss                 | 0.537    |
+|    n_updates            | 10       |
+|    policy_gradient_loss | -0.0224  |
+|    value_loss           | 2.72     |
+--------------------------------------
+--------------------------------------
+| mean\disc\disc_acc      | 0.5      |
+| mean\disc\disc_acc_e... | 1        |
+| mean\disc\disc_acc_gen  | 0        |
+| mean\disc\disc_loss     | 0.697    |
+| mean\disc\disc_propo... | 0.5      |
+| mean\disc\global_step   | 2        |
+| mean\disc\n_expert      | 10       |
+| mean\disc\n_generated   | 10       |
+| mean\gen\rollout/       |          |
+|    ep_len_mean          | 144      |
+|    ep_rew_mean          | 0        |
+| mean\gen\time/          |          |
+|    fps                  | 716      |
+|    iterations           | 1        |
+|    time_elapsed         | 0        |
+|    total_timesteps      | 200      |
+| mean\gen\train/         |          |
+|    approx_kl            | 0.0158   |
+|    clip_fraction        | 0.064    |
+|    clip_range           | 0.2      |
+|    entropy_loss         | -1.94    |
+|    explained_variance   | -3.09    |
+|    learning_rate        | 0.0003   |
+|    loss                 | -0.0775  |
+|    n_updates            | 20       |
+|    policy_gradient_loss | -0.0293  |
+|    value_loss           | 0.0791   |
+--------------------------------------
+--------------------------------------
+| mean\disc\disc_acc      | 0.5      |
+| mean\disc\disc_acc_e... | 1        |
+| mean\disc\disc_acc_gen  | 0        |
+| mean\disc\disc_loss     | 0.695    |
+| mean\disc\disc_propo... | 0.5      |
+| mean\disc\global_step   | 3        |
+| mean\disc\n_expert      | 10       |
+| mean\disc\n_generated   | 10       |
+| mean\gen\rollout/       |          |
+|    ep_len_mean          | 144      |
+|    ep_rew_mean          | 0        |
+|    ep_rew_wrapped_mean  | 107      |
+| mean\gen\time/          |          |
+|    fps                  | 1.03e+03 |
+|    iterations           | 1        |
+|    time_elapsed         | 0        |
+|    total_timesteps      | 300      |
+| mean\gen\train/         |          |
+|    approx_kl            | -0.0025  |
+|    clip_fraction        | 0.105    |
+|    clip_range           | 0.2      |
+|    entropy_loss         | -1.93    |
+|    explained_variance   | -1.08    |
+|    learning_rate        | 0.0003   |
+|    loss                 | -0.0509  |
+|    n_updates            | 30       |
+|    policy_gradient_loss | -0.0379  |
+|    value_loss           | 0.109    |
+--------------------------------------

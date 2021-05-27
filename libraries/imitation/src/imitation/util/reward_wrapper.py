@@ -87,9 +87,7 @@ class RewardVecEnvWrapper(vec_env.VecEnvWrapper):
         obs_fixed = np.stack(obs_fixed)
 
         rews = self.reward_fn(self._old_obs, self._actions, obs_fixed, np.array(dones))
-
-        final_rews = old_rews + sigmoid(rews) - 1
-        # print(rews)
+        
         assert len(rews) == len(obs), "must return one rew for each env"
         done_mask = np.asarray(dones, dtype="bool").reshape((len(dones),))
 
@@ -106,7 +104,7 @@ class RewardVecEnvWrapper(vec_env.VecEnvWrapper):
         self._old_obs = obs
         for info_dict, old_rew in zip(infos, old_rews):
             info_dict["wrapped_env_rew"] = old_rew
-        return obs, final_rews, dones, infos
+        return obs, rews, dones, infos
 
 
 class SomethingRewardVecEnvWrapper(vec_env.VecEnvWrapper):
