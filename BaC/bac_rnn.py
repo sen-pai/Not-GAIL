@@ -91,13 +91,19 @@ class BaCRNN:
 
     def train_bac_classifier(self):
         if self.bc_trainer != None:
-            self.collect_not_expert_from_bc(filter = True)
-        self.collect_not_expert(filter = True)
-        self.collect_not_expert_from_expert(filter = True)
+            self.collect_not_expert_from_bc(filter = False)
+        self.collect_not_expert(filter = False)
+        self.collect_not_expert_from_expert(filter = False)
 
         for i in tqdm(range(self.nepochs)):
             full_loss = 0
 
+            if i%25 == 0 and i > 20:
+                if self.bc_trainer != None:
+                    self.collect_not_expert_from_bc(filter = True)
+                self.collect_not_expert(filter = True)
+                self.collect_not_expert_from_expert(filter = True)
+                        
             self.bac_classifier.train()
             for j in range(10):
 
@@ -190,7 +196,7 @@ class BaCRNN:
 
     def collect_not_expert(self, filter = False, cutoff = 0.9):
         self.not_expert_dataset = []
-        for _ in range(500):
+        for _ in range(2000):
             obs_list = []
             action_list = []
             obs = self.train_env.reset()
@@ -228,7 +234,7 @@ class BaCRNN:
     def collect_not_expert_from_bc(self, filter = False, cutoff = 0.9):
         assert self.bc_trainer != None, "Need a trained BC" 
         self.not_expert_from_bc_dataset = []
-        for _ in range(500):
+        for _ in range(2000):
             obs_list = []
             action_list = []
             ok_flag = True
@@ -236,7 +242,7 @@ class BaCRNN:
             obs_list.append(obs[0])
 
             #bc rollout
-            for j in range(random.sample(list(range(5)), 1)[0]):
+            for j in range(random.sample(list(range(3)), 1)[0]):
                 action, _ = self.bc_trainer.policy.predict(obs, deterministic=True)
                 obs, _, done, _ = self.train_env.step(action)
                 action_list.append(action[0])
@@ -278,7 +284,7 @@ class BaCRNN:
     def collect_not_expert_from_expert(self, filter = False, cutoff = 0.9):
         self.not_expert_from_expert_dataset = []
 
-        for _ in range(200):
+        for _ in range(2000):
             expert_traj = copy.deepcopy(next(self.expert_dataloader))
             obs_list = expert_traj.obs.tolist()
             act_list = expert_traj.acts.tolist()
@@ -318,21 +324,27 @@ class BaCRNN:
 
         expert_probs_avg /= len(self.expert_data)
         not_expert_probs_avg = 0
-        for traj in self.not_expert_dataset:
+        for i, traj in enumerate(self.not_expert_dataset):
             not_expert_probs_avg += self.predict(traj).item()
+            if i > 100:
+                break
         total_not_expert = len(self.not_expert_dataset)
 
         if self.bc_trainer != None:
-            for traj in self.not_expert_from_bc_dataset:
+            for i, traj in enumerate(self.not_expert_from_bc_dataset):
                 not_expert_probs_avg += self.predict(traj).item()
+                if i > 100:
+                    break
             total_not_expert += len(self.not_expert_from_bc_dataset)
 
-        for traj in self.not_expert_from_expert_dataset:
+        for i, traj in enumerate(self.not_expert_from_expert_dataset):
             not_expert_probs_avg += self.predict(traj).item()
+            if i > 100:
+                break
         
         not_expert_probs_avg /= (total_not_expert+ len(self.not_expert_from_expert_dataset))
 
         print(f"earlystopping: expert = {expert_probs_avg} not expert = {not_expert_probs_avg}")
-        if expert_probs_avg > 0.95 and not_expert_probs_avg < 0.05:
-            return True
+        # if expert_probs_avg > 0.95 and not_expert_probs_avg < 0.05:
+        #     return True
         return False
