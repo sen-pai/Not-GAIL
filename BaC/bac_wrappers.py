@@ -194,6 +194,14 @@ class RewardVecEnvWrapper(vec_env.VecEnvWrapper):
         if self.bac_reward_flag:
             rews = old_rews - rews
         
+        ##############
+        rews = old_rews #+ 0.1*rews
+        a_pos = self.venv.get_attr("agent_pos")[0]
+        if (a_pos[0]==2 or a_pos[0]==3) and (a_pos[1]==2 or a_pos[1]==3) and dones[0]==False:
+            # print("YES", a_pos,dones)
+            rews -= 1
+        ###############
+ 
         assert len(rews) == len(obs), "must return one rew for each env"
         done_mask = np.asarray(dones, dtype="bool").reshape((len(dones),))
 

@@ -2,7 +2,6 @@ import pickle5 as pickle
 
 import gym
 import gym_minigrid
-from gym_minigrid import wrappers as wrap
 from stable_baselines3 import PPO
 from gym.wrappers.frame_stack import FrameStack
 from stable_baselines3.common import policies, vec_env
