@@ -54,15 +54,12 @@ class BaCRNN:
         bac_classifier,
         expert_data,
         bc_trainer=None,
-        eval_env=None,
         not_expert_data=None,
-        loss_type = "bce",
         nepochs: int = 10,
         batch_size: int = 10,
     ):
 
         self.train_env = train_env  # pass an instance of the environment
-        self.eval_env = eval_env
         self.bc_trainer = (
             bc_trainer  # pass an instance of imitation.bc with a trained policy.
         )
@@ -80,14 +77,11 @@ class BaCRNN:
 
         self.bac_optimizer = th.optim.Adam(self.bac_classifier.parameters())
         
-        if loss_type == "bce":
-            self.bac_loss = nn.BCEWithLogitsLoss()
-        else:
-            self.bac_loss =nn.TripletMarginLoss(margin=1.0)
-
+        self.bac_loss = nn.BCEWithLogitsLoss()
+        
         self.batch_size = batch_size
         self.nepochs = nepochs
-        print(f"BaC will be trained for {100*nepochs} epochs")
+        self.collect_max = 150
 
     def train_bac_classifier(self):
         if self.bc_trainer != None:
@@ -196,7 +190,7 @@ class BaCRNN:
 
     def collect_not_expert(self, filter = False, cutoff = 0.9):
         self.not_expert_dataset = []
-        for _ in range(2000):
+        for _ in range(self.collect_max):
             obs_list = []
             action_list = []
             obs = self.train_env.reset()
@@ -212,7 +206,6 @@ class BaCRNN:
                 obs_list.append(obs[0])
 
                 if done:
-                    # print("done")
                     break
 
             if len(action_list) >= 1:
@@ -222,7 +215,6 @@ class BaCRNN:
                         infos=np.array([{} for i in action_list]),
                     )
                 if filter:
-                    # print(f"pred not {self.predict(collected_traj).item()}")
                     if self.predict(collected_traj) < cutoff:
                         self.not_expert_dataset.append(collected_traj)
                 else:
@@ -234,7 +226,7 @@ class BaCRNN:
     def collect_not_expert_from_bc(self, filter = False, cutoff = 0.9):
         assert self.bc_trainer != None, "Need a trained BC" 
         self.not_expert_from_bc_dataset = []
-        for _ in range(2000):
+        for _ in range(self.collect_max):
             obs_list = []
             action_list = []
             ok_flag = True
@@ -262,6 +254,7 @@ class BaCRNN:
                 obs_list.append(obs[0])
 
                 if done:
+                    ok_flag = False
                     break
 
             if len(action_list) >= 1 and ok_flag:
@@ -284,7 +277,7 @@ class BaCRNN:
     def collect_not_expert_from_expert(self, filter = False, cutoff = 0.9):
         self.not_expert_from_expert_dataset = []
 
-        for _ in range(2000):
+        for _ in range(self.collect_max):
             expert_traj = copy.deepcopy(next(self.expert_dataloader))
             obs_list = expert_traj.obs.tolist()
             act_list = expert_traj.acts.tolist()
@@ -324,27 +317,32 @@ class BaCRNN:
 
         expert_probs_avg /= len(self.expert_data)
         not_expert_probs_avg = 0
-        for i, traj in enumerate(self.not_expert_dataset):
-            not_expert_probs_avg += self.predict(traj).item()
-            if i > 100:
-                break
-        total_not_expert = len(self.not_expert_dataset)
 
         if self.bc_trainer != None:
             for i, traj in enumerate(self.not_expert_from_bc_dataset):
                 not_expert_probs_avg += self.predict(traj).item()
                 if i > 100:
                     break
-            total_not_expert += len(self.not_expert_from_bc_dataset)
+            total_not_expert = len(self.not_expert_from_bc_dataset)
+        else:
+            for i, traj in enumerate(self.not_expert_dataset):
+                not_expert_probs_avg += self.predict(traj).item()
+                if i > 100:
+                    break
+            total_not_expert = len(self.not_expert_dataset)
 
         for i, traj in enumerate(self.not_expert_from_expert_dataset):
             not_expert_probs_avg += self.predict(traj).item()
             if i > 100:
                 break
-        
-        not_expert_probs_avg /= (total_not_expert+ len(self.not_expert_from_expert_dataset))
 
-        print(f"earlystopping: expert = {expert_probs_avg} not expert = {not_expert_probs_avg}")
+        not_expert_probs_avg /= total_not_expert + len(
+            self.not_expert_from_expert_dataset
+        )
+
+        print(
+            f"earlystopping: expert = {expert_probs_avg} not expert = {not_expert_probs_avg}"
+        )
         # if expert_probs_avg > 0.95 and not_expert_probs_avg < 0.05:
         #     return True
         return False

@@ -28,7 +28,7 @@ def minigrid_get_env(env, n_envs, flat = False, env_kwargs={}):
 
 
 
-def minigrid_get_env_rew_times(env, n_envs, flat = False, times = 10, env_kwargs={}):
+def minigrid_get_env_rew_times(env, n_envs, flat = False, env_kwargs={}):
 
     img_wrappers = lambda env: RewardTimes(wrappers.ImgObsWrapper(wrappers.RGBImgObsWrapper(env)))
     flat_wrapper = lambda env: wrappers.FlatObsWrapper(env)

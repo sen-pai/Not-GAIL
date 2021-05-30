@@ -97,8 +97,8 @@ print(args)
 
 
 env_kwargs = {}
-# if "FourRooms" in args.env:
-#     env_kwargs = {"agent_pos": (3, 3), "goal_pos": (15, 15)}
+if "FourRooms" in args.env:
+    env_kwargs = {"agent_pos": (3, 3), "goal_pos": (15, 15)}
 
 train_env = minigrid_get_env(args.env, args.nenvs, args.flat,  env_kwargs)
 
@@ -150,7 +150,6 @@ if args.bc:
 
 bac_trainer = BaC_RNN_Triplet(
     train_env,
-    eval_env=None,
     bc_trainer=bc_trainer if args.bc else None,
     bac_classifier=bac_class,
     expert_data=trajectories,
@@ -215,7 +214,7 @@ while x != "n":
         )
     ).item()
 
-    if rew > 0.001:
+    if rew > 0.01:
         rew = -rew
     else:
         rew = 0
@@ -227,59 +226,3 @@ while x != "n":
         obs_list = [obs[0]]
         action_list = []
         tot_rew = 0
-
-
-
-
-# obs_list = []
-# action_list = []
-# x = ""
-
-# obs_list.append(train_env.reset()[0])
-# while x != "n":
-#     train_env.render()
-#     x = msvcrt.getwch()
-
-#     if x == "a":
-#         action = [0]
-#     elif x == "d":
-#         action = [1]
-#     elif x == "n":
-#         break
-#     elif x == "w":
-#         action = [2]
-#     elif x =="p":
-#         obs_list = [train_env.reset()[0]]
-#         action_list = []
-#     elif x =="m":
-#         obs_list = [n_obs[0]]
-#         action_list = []
-    
-#     else:
-#         action = [int(x)]
-    
-
-#     action_list.append(action[0])
-#     n_obs, reward, done, info = train_env.step(action)
-
-#     obs_list.append(n_obs[0])
-#     rew = bac_trainer.predict(
-#         Trajectory(
-#             obs=np.array([n_obs[0]]),
-#             acts=np.array(action),
-#             infos=np.array([{}]),
-#         )
-#     ).data
-
-#     if rew > 0.001:
-#         rew = -rew
-#     # else:
-#     #     rew = 0
-#     print(action, rew)
-#     obs = n_obs
-#     if done:
-#         print("done")
-#         obs = train_env.reset()
-#         obs_list = [obs[0]]
-#         action_list = []
-#         tot_rew = 0
