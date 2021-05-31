@@ -61,7 +61,7 @@ args = parser.parse_args()
 
 env = minigrid_get_env(args.env, 1, args.flat)
 
-best_model_path = "./logs/" + args.env + "/" + args.run + "/best_model/best_model.zip"
+best_model_path = "./logs/" + args.env + "/ppo/" + args.run + "/best_model/best_model.zip"
 pkl_save_path = "./traj_datasets/" + args.save_name + ".pkl"
 
 

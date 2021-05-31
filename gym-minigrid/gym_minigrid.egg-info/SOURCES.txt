@@ -14,6 +14,7 @@ gym_minigrid.egg-info/requires.txt
 gym_minigrid.egg-info/top_level.txt
 gym_minigrid/envs/__init__.py
 gym_minigrid/envs/blockedunlockpickup.py
+gym_minigrid/envs/colored_fourrooms.py
 gym_minigrid/envs/crossing.py
 gym_minigrid/envs/distshift.py
 gym_minigrid/envs/doorkey.py

@@ -100,6 +100,38 @@ class ActObsCRNN(nn.Module):
             outputs = self.mlp(hidden_state)
             return outputs.squeeze(1).squeeze(1)
 
+    #embeddings for triplet loss
+    def triplet_forward(self, trajectory) -> th.Tensor:
+        
+        if isinstance(trajectory, list):
+            all_cat = []
+
+            for traj in trajectory:
+                obs, acts = self.preprocess_trajectory(traj)
+
+                obs_features = self.cnn_feature_extractor(obs)
+                cat_inputs = th.cat((obs_features, acts), dim=1)
+                all_cat.append(cat_inputs)
+
+            lens = [x.shape[0] for x in all_cat]
+            padded_cat = pad_sequence(all_cat, batch_first=True, padding_value=0)
+            cat_rnn_inputs = pack_padded_sequence(
+            padded_cat, lens, enforce_sorted=False, batch_first=True
+            )
+            _, (hidden_state, _) = self.rnn(cat_rnn_inputs)
+
+            return hidden_state
+        else:
+            obs, acts = self.preprocess_trajectory(trajectory)
+
+            obs_features = self.cnn_feature_extractor(obs)
+            cat_inputs = th.cat((obs_features, acts), dim=1)
+
+            cat_rnn_inputs = cat_inputs.view(1, -1, self.in_size) #batch, seq_len, feature_size
+            _, (hidden_state, _) = self.rnn(cat_rnn_inputs)
+
+            return hidden_state
+
     def device(self) -> th.device:
         """Heuristic to determine which device this module is on."""
         first_param = next(self.parameters())

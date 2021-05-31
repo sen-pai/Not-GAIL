@@ -19,6 +19,10 @@ Make sure you are not using python 3.9, I faced many installation problems with 
         * ``MiniGrid-KeyEmpty-16x16-v0``
         * ``MiniGrid-KeyEmpty-8x8-v0``
         * ``MiniGrid-KeyEmpty-6x6-v0``
+* ``MiniGrid-ColoredFourRooms``: Similar to 4 rooms env, with top right room colored as yellow
+    * Found in : ``gym_minigrid/envs/colored_fourrooms.py``
+    * Variants: 
+        * ``MiniGrid-ColoredFourRooms-v0``
 
 
 
