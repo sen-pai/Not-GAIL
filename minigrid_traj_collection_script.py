@@ -26,7 +26,7 @@ parser.add_argument(
 )
 parser.add_argument("--run", "-r", help="Run name", default="testing")
 
-parser.add_argument("--save-name", "-s", help="Run name", default="saved_testing")
+parser.add_argument("--save-name", "-s", help="Save name", default="saved_testing")
 
 parser.add_argument(
     "--seed", type=int, help="random seed to generate the environment with", default=1
@@ -98,3 +98,6 @@ for traj in range(args.ntraj):
 
 with open(pkl_save_path, "wb") as handle:
     pickle.dump(traj_dataset, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
+
+print(f"{len(traj_dataset)} trajectories saved at {pkl_save_path}")

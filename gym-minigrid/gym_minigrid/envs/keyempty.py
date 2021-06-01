@@ -66,5 +66,5 @@ register(
 
 register(id="MiniGrid-KeyEmpty-6x6-v0", entry_point="gym_minigrid.envs:KeyEmptyEnv6x6")
 
-register(id="MiniGrid-KeyEmpty-8x8-v0", entry_point="gym_minigrid.envs:KeyEmptyEnv")
+register(id="MiniGrid-KeyEmpty-8x8-v0", entry_point="gym_minigrid.envs:KeyEmptyEnv8x8")
 
