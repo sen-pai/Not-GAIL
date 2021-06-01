@@ -3,6 +3,11 @@ To install each library here use ``pip install -e``
 
 Make sure you are not using python 3.9, I faced many installation problems with it. Python 3.7 or 3.8 is better.
 
+#### For empty middle room 
+collected traj saved in ``traj_datasets\middle_empty_random_traj``
+train BaC with ``python .\test_crnn_bac_triplet.py -e MiniGrid-MidEmpty-Random-6x6-v0 -t middle_empty_random_traj --bc -s avoid_middle_6x6``
+load and check BaC with ``python .\test_crnn_bac_triplet.py -e MiniGrid-MidEmpty-Random-6x6-v0 -s avoid_middle_6x6 -l``
+weights saved in ``bac_weights\avoid_middle_6x6.pt``
 
 #### Scripts
 
@@ -10,6 +15,7 @@ Make sure you are not using python 3.9, I faced many installation problems with 
 
 ``python .\minigrid_traj_collection_script.py -e MiniGrid-Empty-Random-6x6-v0 -r cnn_1 -s test_traj_collection --ntraj 20 --render``
 
+``python .\test_crnn_bac_triplet.py -e MiniGrid-KeyEmpty-6x6-v0  -t 100_key_6x6_traj --bc -s key_6x6_bac_attn_switched -te 60 -ce 120``
 
 
 #### New Minigrid Envs
@@ -19,6 +25,20 @@ Make sure you are not using python 3.9, I faced many installation problems with 
         * ``MiniGrid-KeyEmpty-16x16-v0``
         * ``MiniGrid-KeyEmpty-8x8-v0``
         * ``MiniGrid-KeyEmpty-6x6-v0``
+
+* ``MiniGrid-nKeyEmpty``: Similar to the key empty grid with agent and n keys randomized.
+    * Found in : ``gym_minigrid/envs/nkeyempty.py``
+    * Variants: 
+        * ``MiniGrid-3KeyEmpty-8x8-v0``
+        * ``MiniGrid-2KeyEmpty-6x6-v0``
+
+
+* ``MiniGrid-MidEmpty``: Similar to the empty grid with agent avoiding middle blocks.
+    * Found in : ``gym_minigrid/envs/middleempty.py``
+    * Variants: 
+        * ``MiniGrid-MidEmpty-6x6-v0``
+        * ``MiniGrid-MidEmpty-Random-6x6-v0``
+
 * ``MiniGrid-ColoredFourRooms``: Similar to 4 rooms env, with top right room colored as yellow
     * Found in : ``gym_minigrid/envs/colored_fourrooms.py``
     * Variants: 

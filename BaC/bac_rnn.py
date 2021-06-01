@@ -75,7 +75,7 @@ class BaCRNN:
         if not_expert_data:
             self.not_expert_dataloader = util.endless_iter(not_expert_data)
 
-        self.bac_optimizer = th.optim.Adam(self.bac_classifier.parameters())
+        self.bac_optimizer = th.optim.AdamW(self.bac_classifier.parameters())
         
         self.bac_loss = nn.BCEWithLogitsLoss()
         
@@ -196,9 +196,9 @@ class BaCRNN:
             obs = self.train_env.reset()
             obs_list.append(obs[0])
 
-            for i in range(20):
+            for i in range(4):
                 # action = self.train_env.action_space.sample()
-                action = random.sample([0, 1, 2, 3], 1)[0]
+                action = random.sample([0, 1, 2], 1)[0]
                 # print(action)
 
                 obs, _, done, _ = self.train_env.step([action])
@@ -234,7 +234,7 @@ class BaCRNN:
             obs_list.append(obs[0])
 
             #bc rollout
-            for j in range(random.sample(list(range(3)), 1)[0]):
+            for j in range(random.sample(list(range(1)), 1)[0]):
                 action, _ = self.bc_trainer.policy.predict(obs, deterministic=True)
                 obs, _, done, _ = self.train_env.step(action)
                 action_list.append(action[0])
@@ -244,11 +244,11 @@ class BaCRNN:
                     break
             
             #continue with random actions
-            for i in range(5):
+            for i in range(2):
                 if not ok_flag:
                     break
 
-                action = random.sample([0, 1, 2, 3], 1)[0]
+                action = random.sample([0, 1, 2], 1)[0]
                 obs, _, done, _ = self.train_env.step([action])
                 action_list.append(action)
                 obs_list.append(obs[0])
@@ -277,7 +277,7 @@ class BaCRNN:
     def collect_not_expert_from_expert(self, filter = False, cutoff = 0.9):
         self.not_expert_from_expert_dataset = []
 
-        for _ in range(self.collect_max):
+        for _ in range(int(self.collect_max)):
             expert_traj = copy.deepcopy(next(self.expert_dataloader))
             obs_list = expert_traj.obs.tolist()
             act_list = expert_traj.acts.tolist()
@@ -304,6 +304,29 @@ class BaCRNN:
                         self.not_expert_from_expert_dataset.append(collected_traj)
                 else:
                     self.not_expert_from_expert_dataset.append(collected_traj)
+
+        # for _ in range(int(self.collect_max/2)):
+        #     expert_traj = copy.deepcopy(next(self.expert_dataloader))
+        #     obs_list = expert_traj.obs.tolist()
+        #     act_list = expert_traj.acts.tolist()
+
+        #     if len(act_list) < 5:
+        #         continue
+            
+
+
+        #     if len(act_list) >= 1:
+        #         collected_traj = Trajectory(
+        #                 obs=np.array(obs_list),
+        #                 acts=np.array(act_list),
+        #                 infos=np.array([{} for i in act_list]),
+        #             )
+                
+        #         if filter:
+        #             if self.predict(collected_traj) < cutoff:
+        #                 self.not_expert_from_expert_dataset.append(collected_traj)
+        #         else:
+        #             self.not_expert_from_expert_dataset.append(collected_traj)
         
         print(f"not expert from expert dataset size: {len(self.not_expert_from_expert_dataset)}")
 

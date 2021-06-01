@@ -29,7 +29,9 @@ gym_minigrid/envs/keyempty.py
 gym_minigrid/envs/lavagap.py
 gym_minigrid/envs/lockedroom.py
 gym_minigrid/envs/memory.py
+gym_minigrid/envs/middleempty.py
 gym_minigrid/envs/multiroom.py
+gym_minigrid/envs/nkeyempty.py
 gym_minigrid/envs/obstructedmaze.py
 gym_minigrid/envs/playground_v0.py
 gym_minigrid/envs/putnear.py

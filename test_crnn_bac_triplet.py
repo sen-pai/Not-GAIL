@@ -1,5 +1,5 @@
 from libraries.imitation.src.imitation.data.types import Trajectory
-from bac_utils.env_utils import minigrid_render, minigrid_get_env
+from bac_utils.env_utils import seed_everything, minigrid_get_env
 import os, time
 import numpy as np
 
@@ -56,6 +56,23 @@ parser.add_argument(
 )
 
 parser.add_argument(
+    "--triplet-epochs",
+    "-te",
+    type=int,
+    help="number of triplet epochs to train",
+    default=60,
+)
+
+parser.add_argument(
+    "--classify-epochs",
+    "-ce",
+    type=int,
+    help="number of epochs to train till",
+    default=80,
+)
+
+
+parser.add_argument(
     "--warm", "-w", default=False, help="Expert warm start", action="store_true",
 )
 
@@ -84,11 +101,7 @@ parser.add_argument(
 )
 
 parser.add_argument(
-    "--load",
-    "-l",
-    default=False,
-    help="Check loaded",
-    action="store_true",
+    "--load", "-l", default=False, help="Check loaded", action="store_true",
 )
 
 
@@ -96,11 +109,13 @@ args = parser.parse_args()
 print(args)
 
 
+seed_everything(0)
+
 env_kwargs = {}
 if "FourRooms" in args.env:
     env_kwargs = {"agent_pos": (3, 3), "goal_pos": (15, 15)}
 
-train_env = minigrid_get_env(args.env, args.nenvs, args.flat,  env_kwargs)
+train_env = minigrid_get_env(args.env, args.nenvs, args.flat, env_kwargs)
 
 traj_dataset_path = "./traj_datasets/" + args.traj_name + ".pkl"
 
@@ -108,10 +123,6 @@ print(f"Expert Dataset: {args.traj_name}")
 
 with open(traj_dataset_path, "rb") as f:
     trajectories = pickle.load(f)
-
-# bac_class = ActObsCRNN(
-#     action_space=train_env.action_space, observation_space=train_env.observation_space
-# ).to("cuda")
 
 bac_class = ActObsCRNNAttn(
     action_space=train_env.action_space, observation_space=train_env.observation_space
@@ -131,21 +142,7 @@ if args.bc:
         loss_type="original",
         policy_class=policy_type,
     )
-    bc_trainer.train(n_epochs=20)
-
-    # for traj in range(10):
-    #     obs = train_env.reset()
-    #     train_env.render()
-    #     for i in range(40):
-    #         action, _ = bc_trainer.policy.predict(obs, deterministic=True)
-
-    #         obs, reward, done, info = train_env.step(action)
-    #         train_env.render()
-    #         if done:
-    #             break
-    
-
-
+    bc_trainer.train(n_epochs=80)
 
 
 bac_trainer = BaC_RNN_Triplet(
@@ -154,20 +151,22 @@ bac_trainer = BaC_RNN_Triplet(
     bac_classifier=bac_class,
     expert_data=trajectories,
     nepochs=args.nepochs,
+    triplet_epochs=args.triplet_epochs,
+    classify_epochs=args.classify_epochs,
 )
 
 
-
-
 if args.load:
-    bac_trainer.bac_classifier.load_state_dict(torch.load("bac_weights/"+ args.save_name+".pt"))
+    bac_trainer.bac_classifier.load_state_dict(
+        torch.load("bac_weights/" + args.save_name + ".pt")
+    )
 else:
     if args.warm:
         bac_trainer.expert_warmstart()
 
     bac_trainer.train_bac_2halfs()
 
-    bac_trainer.save("bac_weights", args.save_name+".pt")
+    bac_trainer.save("bac_weights", args.save_name + ".pt")
 
     for traj in trajectories:
         print(bac_trainer.predict(traj).item())
@@ -191,16 +190,15 @@ while x != "n":
         action = [2]
     elif x == "e":
         action = [3]
-    elif x =="p":
+    elif x == "p":
         obs_list = [train_env.reset()[0]]
         action_list = []
-    elif x =="m":
+    elif x == "m":
         obs_list = [n_obs[0]]
         action_list = []
-    
+
     else:
         action = [int(x)]
-    
 
     action_list.append(action[0])
     n_obs, reward, done, info = train_env.step(action)

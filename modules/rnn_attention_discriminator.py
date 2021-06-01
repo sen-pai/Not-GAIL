@@ -56,11 +56,9 @@ class ActObsCRNNAttn(nn.Module):
         self, ndarray: np.ndarray, space: gym.Space, **kwargs
     ) -> th.Tensor:
         tensor = th.as_tensor(ndarray, device=self.device(), **kwargs)
-        # print(ndarray)
         preprocessed = preprocessing.preprocess_obs(
             tensor, space, normalize_images=True,
         )
-        # print(f"pro {preprocessed}")
         return preprocessed
 
     def preprocess_trajectory(self, trajectory: Trajectory):
@@ -71,18 +69,19 @@ class ActObsCRNNAttn(nn.Module):
 
         return obs, acts
 
-    def forward(self, trajectory, attention=True, freeze = False) -> th.Tensor:
+    def forward(self, trajectory, attention=False) -> th.Tensor:
+        with th.no_grad():
+            encoder_outputs, traj_embeddings = self.embedding(trajectory)
+        batch_size = encoder_outputs.shape[0]
         if attention:
-            attn_features, traj_embeddings = self.embedding(trajectory)
-            batch_size = attn_features.shape[0]
-            return self.mlp(self.attn(attn_features)).view(batch_size)
-        
-        
+            attn_features = self.attn(encoder_outputs)
+            return self.mlp(attn_features).view(batch_size)
+
         _, traj_embeddings = self.embedding(trajectory)
-        return self.mlp(traj_embeddings)
+        return self.mlp(traj_embeddings).view(batch_size)
 
     # embeddings for triplet loss
-    def embedding(self, trajectory) -> th.Tensor:
+    def embedding(self, trajectory, attention = False) -> th.Tensor:
 
         if isinstance(trajectory, list):
             all_cat = []
@@ -100,9 +99,13 @@ class ActObsCRNNAttn(nn.Module):
                 padded_cat, lens, enforce_sorted=False, batch_first=True
             )
             encoder_outputs, (hidden_state, _) = self.rnn(cat_rnn_inputs)
-            
-            encoder_outputs = nn.utils.rnn.pad_packed_sequence(encoder_outputs, batch_first=True)[0]
-            encoder_outputs = encoder_outputs[:, :, :int(self.in_size)]
+
+            encoder_outputs = nn.utils.rnn.pad_packed_sequence(
+                encoder_outputs, batch_first=True
+            )[0]
+            encoder_outputs = encoder_outputs[:, :, : int(self.in_size)]
+            if attention:
+                return self.attn(encoder_outputs), hidden_state
             return encoder_outputs, hidden_state
         else:
             obs, acts = self.preprocess_trajectory(trajectory)
@@ -114,8 +117,11 @@ class ActObsCRNNAttn(nn.Module):
                 1, -1, self.in_size
             )  # batch, seq_len, feature_size
             encoder_outputs, (hidden_state, _) = self.rnn(cat_rnn_inputs)
-            
-            encoder_outputs = encoder_outputs[:, :, :int(self.in_size)]
+
+            encoder_outputs = encoder_outputs[:, :, : int(self.in_size)]
+            if attention:
+                return self.attn(encoder_outputs), hidden_state
+
             return encoder_outputs, hidden_state
 
     def device(self) -> th.device:
@@ -142,3 +148,4 @@ class Attn(nn.Module):
         )  # (b*s, 1) -> (b, s, 1)
         feats = (encoder_outputs * attns).sum(dim=1)
         return feats
+
