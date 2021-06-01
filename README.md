@@ -3,6 +3,11 @@ To install each library here use ``pip install -e``
 
 Make sure you are not using python 3.9, I faced many installation problems with it. Python 3.7 or 3.8 is better.
 
+#### For empty middle room 
+collected traj saved in ``traj_datasets\middle_empty_random_traj``
+train BaC with ``python .\test_crnn_bac_triplet.py -e MiniGrid-MidEmpty-Random-6x6-v0 -t middle_empty_random_traj --bc -s avoid_middle_6x6``
+load and check BaC with ``python .\test_crnn_bac_triplet.py -e MiniGrid-MidEmpty-Random-6x6-v0 -s avoid_middle_6x6 -l``
+weights saved in ``bac_weights\avoid_middle_6x6.pt``
 
 #### Scripts
 
@@ -26,6 +31,13 @@ Make sure you are not using python 3.9, I faced many installation problems with 
     * Variants: 
         * ``MiniGrid-3KeyEmpty-8x8-v0``
         * ``MiniGrid-2KeyEmpty-6x6-v0``
+
+
+* ``MiniGrid-MidEmpty``: Similar to the empty grid with agent avoiding middle blocks.
+    * Found in : ``gym_minigrid/envs/middleempty.py``
+    * Variants: 
+        * ``MiniGrid-MidEmpty-6x6-v0``
+        * ``MiniGrid-MidEmpty-Random-6x6-v0``
 
 * ``MiniGrid-ColoredFourRooms``: Similar to 4 rooms env, with top right room colored as yellow
     * Found in : ``gym_minigrid/envs/colored_fourrooms.py``

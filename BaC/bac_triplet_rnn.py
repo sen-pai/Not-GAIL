@@ -173,7 +173,7 @@ class BaC_RNN_Triplet(BaCRNN):
         for i in tqdm(range(self.triplet_epochs + self.classify_epochs)):
 
             # collect not expert after every 20 epochs
-            if i % 20 == 0 and i > 1:
+            if i % 20 == 0 and i > 1 and i > self.triplet_epochs:
                 # self.bac_classifier_epoch()
                 self.collect_not_expert_from_bc(filter)
                 self.collect_not_expert(filter)

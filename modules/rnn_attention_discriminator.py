@@ -70,7 +70,8 @@ class ActObsCRNNAttn(nn.Module):
         return obs, acts
 
     def forward(self, trajectory, attention=False) -> th.Tensor:
-        encoder_outputs, traj_embeddings = self.embedding(trajectory)
+        with th.no_grad():
+            encoder_outputs, traj_embeddings = self.embedding(trajectory)
         batch_size = encoder_outputs.shape[0]
         if attention:
             attn_features = self.attn(encoder_outputs)
@@ -80,7 +81,7 @@ class ActObsCRNNAttn(nn.Module):
         return self.mlp(traj_embeddings).view(batch_size)
 
     # embeddings for triplet loss
-    def embedding(self, trajectory, attention = True) -> th.Tensor:
+    def embedding(self, trajectory, attention = False) -> th.Tensor:
 
         if isinstance(trajectory, list):
             all_cat = []

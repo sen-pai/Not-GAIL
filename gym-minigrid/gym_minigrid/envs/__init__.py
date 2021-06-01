@@ -25,4 +25,6 @@ from gym_minigrid.envs.distshift import *
 
 from gym_minigrid.envs.keyempty import *
 from gym_minigrid.envs.nkeyempty import *
+from gym_minigrid.envs.middleempty import *
+
 from gym_minigrid.envs.colored_fourrooms import *
