@@ -942,7 +942,7 @@ class MiniGridEnv(gym.Env):
             ))
 
             # Don't place the object on top of another object
-            if self.grid.get(*pos) != None:
+            if self.grid.get(*pos) != None and (not isinstance(self.grid.get(*pos),Block)):
                 continue
 
             # Don't place the object where the agent is
@@ -954,7 +954,8 @@ class MiniGridEnv(gym.Env):
                 continue
 
             break
-
+        
+        #if not isinstance(self.grid.get(*pos),Block):
         self.grid.set(*pos, obj)
 
         if obj is not None:

@@ -19,6 +19,7 @@ import msvcrt
 from bac_utils.env_utils import minigrid_render, minigrid_get_env
 from BaC import bac_wrappers
 
+import get_classifier
 
 def cust_rew(
         state: np.ndarray,
@@ -30,19 +31,24 @@ def cust_rew(
     return np.array([-1]*len(state))
 
 
-venv = minigrid_get_env('MiniGrid-Empty-Random-6x6-v0', n_envs=1)
+venv = minigrid_get_env('MiniGrid-MidEmpty-Random-6x6-v0', n_envs=1)
 #util.make_vec_env('MiniGrid-Empty-Random-6x6-v0', n_envs=1, post_wrappers= [wrappers.FlatObsWrapper], post_wrappers_kwargs=[{}])
 
-venv = bac_wrappers.RewardVecEnvWrapper(
-    venv, cust_rew
+bac_trainer = get_classifier.get_classifier(venv)
+
+venv = bac_wrappers.RewardVecEnvWrapperRNN(
+    venv, 
+    reward_fn=bac_trainer.predict, 
+    bac_reward_flag=True   # Whether to use new_rews(False) or old_rews-new_rews(True)
 )
 
-#reward_file = "discrims/gail_discrim"+str(i)+".pkl"
+# venv = bac_wrappers.RewardVecEnvWrapper(
+#     venv, cust_rew
+# )
+
 policy = "models/ppo_empty_normal"
 
 trained_policy = PPO.load(policy)
-# with open(reward_file, "rb") as f:
-#     discrim = pickle.load(f)
 
 obs = venv.reset()
 tot_rew = 0
@@ -59,10 +65,7 @@ while x!='n':
             n_obs, reward, done, info = venv.step(action)
 
             
-            # rew = th.sigmoid(-th.tensor(discrim.predict_reward_test(state = obs, action = action, next_state = n_obs, done = done)))
-            # rew2 = discrim.mod_rew(state = obs, action = action, next_state = n_obs, done = done)
-            # tot_rew += rew
-            print(action, reward)#, rew, rew2)
+            print(action, reward)
             obs = n_obs
             if done:
                 print("Total Reward:", tot_rew)
@@ -84,10 +87,7 @@ while x!='n':
 
     n_obs, reward, done, info = venv.step(action)
 
-    # rew = th.sigmoid(-th.tensor(discrim.predict_reward_train(state = obs, action = action, next_state = n_obs, done = done)))
-    # rew2 = discrim.mod_rew(state = obs, action = action, next_state = n_obs, done = done)
-    # tot_rew += rew
-    print(action, reward, venv.get_attr("agent_pos"))#, rew, rew2)
+    print(action, reward, venv.get_attr("agent_pos"))
 
     obs = n_obs
     if done:   

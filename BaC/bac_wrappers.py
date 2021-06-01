@@ -93,7 +93,7 @@ class RewardVecEnvWrapperRNN(vec_env.VecEnvWrapper):
 
         self.obs_list.append(np.squeeze(obs_fixed,axis=0)) #LIST OF OBS
         self.act_list.append(np.squeeze(self._actions,axis=0)) #LIST OF ACT
-        print(np.array(self.obs_list).shape, np.array(self.act_list).shape)
+        # print(np.array(self.obs_list).shape, np.array(self.act_list).shape)
 
 
         rews = self.reward_fn(

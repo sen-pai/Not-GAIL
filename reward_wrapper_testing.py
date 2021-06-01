@@ -1,26 +1,10 @@
-import pickle5 as pickle
-
-import gym
-import gym_minigrid
-from stable_baselines3 import PPO
-from gym.wrappers.frame_stack import FrameStack
-from stable_baselines3.common import policies, vec_env
-
-from imitation.data import buffer, types, wrappers
-from imitation.rewards import common as rew_common
-from imitation.rewards import discrim_nets, reward_nets
-from imitation.util import logger, util
-from imitation.data import rollout
-
 import msvcrt
 import numpy as np
-
-from bac_utils.env_utils import minigrid_render, minigrid_get_env
+from bac_utils.env_utils import minigrid_get_env
 from BaC import bac_wrappers
-from modules.rnn_discriminator import ActObsCRNN
-from BaC.bac_rnn import BaCRNN
+import get_classifier
 
-import torch
+
 
 def cust_rew(
         state: np.ndarray,
@@ -33,31 +17,12 @@ def cust_rew(
 
 
 venv = minigrid_get_env(
-    'MiniGrid-KeyEmpty-6x6-v0',
+    'MiniGrid-MidEmpty-Random-6x6-v0',
     n_envs=1,
 )
 
 
-bac_class = ActObsCRNN(
-    action_space=venv.action_space, observation_space=venv.observation_space
-)
-
-traj_dataset_path = "./traj_datasets/saved_testing.pkl"
-with open(traj_dataset_path, "rb") as f:
-    trajectories = pickle.load(f)
-
-transitions = rollout.flatten_trajectories(trajectories)
-
-bac_trainer = BaCRNN(
-    venv,
-    eval_env=None,
-    bc_trainer=None,
-    bac_classifier=bac_class,
-    expert_data=transitions
-)
-
-bac_trainer.bac_classifier.load_state_dict(torch.load("bac_weights/key_test.pt", map_location=torch.device('cpu')))
-
+bac_trainer = get_classifier.get_classifier(venv)
 
 venv = bac_wrappers.RewardVecEnvWrapperRNN(
     venv, 
