@@ -39,6 +39,9 @@ class ActObsCRNNAttn(nn.Module):
             )
         )
 
+        self.bound_hidden = nn.Sequential(
+            nn.Sigmoid(),
+        )
         self.attn = Attn(self.in_size)
         self.mlp = networks.build_mlp(
             **{
@@ -105,8 +108,8 @@ class ActObsCRNNAttn(nn.Module):
             )[0]
             encoder_outputs = encoder_outputs[:, :, : int(self.in_size)]
             if attention:
-                return self.attn(encoder_outputs), hidden_state
-            return encoder_outputs, hidden_state
+                return self.attn(encoder_outputs), self.bound_hidden(hidden_state)
+            return encoder_outputs, self.bound_hidden(hidden_state)
         else:
             obs, acts = self.preprocess_trajectory(trajectory)
 
@@ -120,9 +123,9 @@ class ActObsCRNNAttn(nn.Module):
 
             encoder_outputs = encoder_outputs[:, :, : int(self.in_size)]
             if attention:
-                return self.attn(encoder_outputs), hidden_state
+                return self.attn(encoder_outputs), self.bound_hidden(hidden_state)
 
-            return encoder_outputs, hidden_state
+            return encoder_outputs, self.bound_hidden(hidden_state)
 
     def device(self) -> th.device:
         """Heuristic to determine which device this module is on."""

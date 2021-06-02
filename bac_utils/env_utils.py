@@ -11,9 +11,12 @@ from stable_baselines3.common.vec_env import VecTransposeImage
 import torch 
 import random
 
-def minigrid_get_env(env, n_envs, flat = False, env_kwargs={}):
+def minigrid_get_env(env, n_envs, flat = False, partial = False, env_kwargs={}):
 
-    img_wrappers = lambda env: wrappers.ImgObsWrapper(wrappers.RGBImgObsWrapper(env))
+    if not partial:
+        img_wrappers = lambda env: wrappers.ImgObsWrapper(wrappers.RGBImgObsWrapper(env))
+    else:
+        img_wrappers = lambda env: wrappers.ImgObsWrapper(wrappers.RGBImgPartialObsWrapper(env))
     flat_wrapper = lambda env: wrappers.FlatObsWrapper(env)
 
     vec_env = make_vec_env(

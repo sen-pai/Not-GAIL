@@ -42,6 +42,9 @@ parser.add_argument(
 
 parser.add_argument("--traj-name", "-t", help="Run name", default="saved_testing")
 
+parser.add_argument("--not-traj-name", "-nt", help="Run name", default="NA")
+
+
 
 parser.add_argument(
     "--seed", type=int, help="random seed to generate the environment with", default=1
@@ -85,10 +88,6 @@ parser.add_argument(
 )
 
 parser.add_argument(
-    "--show", default=False, help="See a sample image obs", action="store_true",
-)
-
-parser.add_argument(
     "--bc", default=False, help="Train BC", action="store_true",
 )
 
@@ -108,7 +107,7 @@ parser.add_argument(
 args = parser.parse_args()
 print(args)
 
-
+not_expert_provided = False
 seed_everything(0)
 
 env_kwargs = {}
@@ -123,6 +122,12 @@ print(f"Expert Dataset: {args.traj_name}")
 
 with open(traj_dataset_path, "rb") as f:
     trajectories = pickle.load(f)
+
+if args.not_traj_name != "NA":
+    not_expert_provided = True
+    with open("./traj_datasets/" + args.not_traj_name + ".pkl", "rb") as f:
+        not_trajectories = pickle.load(f)
+
 
 bac_class = ActObsCRNNAttn(
     action_space=train_env.action_space, observation_space=train_env.observation_space
@@ -150,6 +155,7 @@ bac_trainer = BaC_RNN_Triplet(
     bc_trainer=bc_trainer if args.bc else None,
     bac_classifier=bac_class,
     expert_data=trajectories,
+    not_expert_data=not_trajectories if not_expert_provided else None,
     nepochs=args.nepochs,
     triplet_epochs=args.triplet_epochs,
     classify_epochs=args.classify_epochs,
@@ -164,12 +170,17 @@ else:
     if args.warm:
         bac_trainer.expert_warmstart()
 
-    bac_trainer.train_bac_2halfs()
+    bac_trainer.train()
 
     bac_trainer.save("bac_weights", args.save_name + ".pt")
 
     for traj in trajectories:
-        print(bac_trainer.predict(traj).item())
+        print("expert: ", bac_trainer.predict(traj).item())
+    
+    if not_expert_provided:    
+        for traj in not_trajectories:
+            print("not expert: ", bac_trainer.predict(traj).item())
+    
 
 obs_list = []
 action_list = []

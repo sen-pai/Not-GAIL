@@ -1,5 +1,5 @@
 from libraries.imitation.src.imitation.data.types import Trajectory
-from bac_utils.env_utils import minigrid_render, minigrid_get_env
+from bac_utils.env_utils import minigrid_render, minigrid_get_env, seed_everything
 import os, time
 import numpy as np
 
@@ -95,6 +95,8 @@ parser.add_argument(
 args = parser.parse_args()
 print(args)
 
+
+seed_everything(0)
 
 env_kwargs = {}
 if "FourRooms" in args.env:

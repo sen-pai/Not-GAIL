@@ -71,9 +71,9 @@ class BaCRNN:
         # taken from imitation.algorithms.adversarial
         self.expert_dataloader = util.endless_iter(expert_data)
 
-        self.not_expert_dataloader = None
+        self.provided_not_expert_dataloader = None
         if not_expert_data:
-            self.not_expert_dataloader = util.endless_iter(not_expert_data)
+            self.provided_not_expert_dataloader = util.endless_iter(not_expert_data)
 
         self.bac_optimizer = th.optim.AdamW(self.bac_classifier.parameters())
         

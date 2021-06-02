@@ -37,14 +37,6 @@ parser.add_argument(
 
 
 parser.add_argument(
-    "--lr",
-    "-lr",
-    type=float,
-    help="learning rate, no need to change, default same as ppo",
-    default=3e-4,
-)
-
-parser.add_argument(
     "--flat",
     "-f",
     default=False,
@@ -53,13 +45,27 @@ parser.add_argument(
 )
 
 parser.add_argument(
+    "--partial",
+    "-p",
+    default=False,
+    help="Partially Observable Img or Fully Observable Image ",
+    action="store_true",
+)
+
+
+parser.add_argument(
     "--show", default=False, help="See a sample image obs", action="store_true",
 )
 
+parser.add_argument("--load-env", "-le", help="Env that was before in curr", default="NA")
+
+
+parser.add_argument("--load", "-l", help="Load weights from another trained PPO", default="NA")
+
 args = parser.parse_args()
 
-train_env = minigrid_get_env(args.env, args.nenvs, args.flat)
-eval_env = minigrid_get_env(args.env, 1, args.flat)
+train_env = minigrid_get_env(args.env, args.nenvs, args.flat, partial= args.partial)
+eval_env = minigrid_get_env(args.env, 1, args.flat, partial= args.partial)
 
 if args.show and not args.flat:
     minigrid_render(train_env.reset())
@@ -78,7 +84,13 @@ eval_callback = EvalCallback(
 callback = CallbackList([checkpoint_callback, eval_callback])
 
 
-policy_type = "MlpPolicy" if args.flat else "CnnPolicy"
 
-model = PPO(policy=policy_type, env=train_env, verbose=1, seed=args.seed)
+if args.load != "NA":
+    best_model_path = "./logs/" + args.load_env + "/ppo/" + args.load + "/best_model/best_model"
+    model = PPO.load(best_model_path, env = train_env)
+    print("loaded")
+else:
+    policy_type = "MlpPolicy" if args.flat else "CnnPolicy"
+    model = PPO(policy=policy_type, env=train_env, verbose=1, seed=args.seed)
+
 model.learn(total_timesteps=int(args.timesteps), callback=callback)
