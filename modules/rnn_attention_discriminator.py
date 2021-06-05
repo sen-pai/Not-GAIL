@@ -11,23 +11,22 @@ from imitation.data import rollout
 from stable_baselines3.common import preprocessing
 from stable_baselines3.common.torch_layers import NatureCNN
 
-
-class ActObsCRNNAttn(nn.Module):
+from .cnn_discriminator import ActObsCNN
+class ActObsCRNNAttn(ActObsCNN):
     """CRNN that takes a trajectory of action, image observation pairs and returns a logit"""
 
     def __init__(
-        self, action_space: gym.Space, observation_space: gym.Space, **mlp_kwargs
+       self, action_space: gym.Space, observation_space: gym.Space, cnn_feature_extractor = None, **mlp_kwargs
     ):
-        super().__init__()
+        super().__init__(action_space, observation_space, cnn_feature_extractor, **mlp_kwargs )
+        # self.observation_space = observation_space
+        # self.action_space = action_space
+        # self.cnn_feature_extractor = NatureCNN(observation_space, features_dim=512)
 
-        self.observation_space = observation_space
-        self.action_space = action_space
-        self.cnn_feature_extractor = NatureCNN(observation_space, features_dim=512)
-
-        self.in_size = (
-            self.cnn_feature_extractor.features_dim
-            + preprocessing.get_flattened_obs_dim(action_space)
-        )
+        # self.in_size = (
+        #     self.cnn_feature_extractor.features_dim
+        #     + preprocessing.get_flattened_obs_dim(action_space)
+        # )
 
         self.rnn = nn.Sequential(
             nn.LSTM(
@@ -43,14 +42,14 @@ class ActObsCRNNAttn(nn.Module):
             nn.Sigmoid(),
         )
         self.attn = Attn(self.in_size)
-        self.mlp = networks.build_mlp(
-            **{
-                "in_size": self.in_size,
-                "out_size": 1,
-                "hid_sizes": (32, 32),
-                **mlp_kwargs,
-            }
-        )
+        # self.mlp = networks.build_mlp(
+        #     **{
+        #         "in_size": self.in_size,
+        #         "out_size": 1,
+        #         "hid_sizes": (32, 32),
+        #         **mlp_kwargs,
+        #     }
+        # )
 
     def _torchify_array(self, ndarray: np.ndarray, **kwargs) -> th.Tensor:
         return th.as_tensor(ndarray, device=self.device(), **kwargs)
@@ -91,8 +90,11 @@ class ActObsCRNNAttn(nn.Module):
 
             for traj in trajectory:
                 obs, acts = self.preprocess_trajectory(traj)
-
-                obs_features = self.cnn_feature_extractor(obs)
+                if self.cnn_feature_extractor_provided:
+                    with th.no_grad():
+                        obs_features = self.cnn_feature_extractor(obs)
+                else:
+                    obs_features = self.cnn_feature_extractor(obs)
                 cat_inputs = th.cat((obs_features, acts), dim=1)
                 all_cat.append(cat_inputs)
 
@@ -112,8 +114,11 @@ class ActObsCRNNAttn(nn.Module):
             return encoder_outputs, self.bound_hidden(hidden_state)
         else:
             obs, acts = self.preprocess_trajectory(trajectory)
-
-            obs_features = self.cnn_feature_extractor(obs)
+            if self.cnn_feature_extractor_provided:
+                with th.no_grad():
+                    obs_features = self.cnn_feature_extractor(obs)
+            else:
+                obs_features = self.cnn_feature_extractor(obs)
             cat_inputs = th.cat((obs_features, acts), dim=1)
 
             cat_rnn_inputs = cat_inputs.view(

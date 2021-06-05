@@ -18,12 +18,14 @@ from bac_utils.env_utils import minigrid_get_env, minigrid_render
 
 
 parser = argparse.ArgumentParser()
+
 parser.add_argument(
     "--env",
     "-e",
     help="minigrid gym environment to train on",
     default="MiniGrid-LavaCrossingS9N1-v0",
 )
+
 parser.add_argument("--save-name", "-s", help="Run name", default="saved_testing")
 
 

@@ -53,7 +53,7 @@ class BaC_CNN:
         eval_env = None,
         bc_trainer= None,
         not_expert_data = None,
-        expert_batch_size: int = 32,
+        expert_batch_size: int = 50,
         nepochs: int = 20,
     ):
 
@@ -80,7 +80,8 @@ class BaC_CNN:
         )
 
         self.bac_optimizer = th.optim.AdamW(self.bac_classifier.parameters())
-        self.bac_loss = nn.BCEWithLogitsLoss(pos_weight=th.tensor([0.8], device=self.bac_classifier.device()))
+        self.scheduler = th.optim.lr_scheduler.MultiStepLR(self.bac_optimizer, milestones =[15, 30, 50])
+        self.bac_loss = nn.BCEWithLogitsLoss()
 
         self.nepochs = nepochs
         print(f"BaC will be trained for {100*nepochs} epochs")
@@ -166,7 +167,8 @@ class BaC_CNN:
                 loss.backward()
                 self.bac_optimizer.step()
 
-            print(loss.data)
+            print(loss.item())
+            self.scheduler.step()
 
         print("bac training done")
 
@@ -182,7 +184,7 @@ class BaC_CNN:
     ) -> th.Tensor:
         tensor = th.as_tensor(ndarray, device=self.bac_classifier.device(), **kwargs)
         preprocessed = preprocessing.preprocess_obs(
-            tensor, space, normalize_images=False,
+            tensor, space, normalize_images=True,
         )
         return preprocessed
 

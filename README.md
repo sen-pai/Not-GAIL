@@ -3,6 +3,9 @@ To install each library here use ``pip install -e``
 
 Make sure you are not using python 3.9, I faced many installation problems with it. Python 3.7 or 3.8 is better.
 
+#### VAE pre-training
+``python .\test_bac_state.py -e MiniGrid-KeyEmpty-6x6-v0  -nt not_100_key_6x6_traj -t 100_key_6x6_traj  -s key_6x6_state --nepochs 100 --ae``
+
 #### Use Curriculum Learning for unfair speedups!
 make sure the -p flag is passed (need partially obs so cnn does not get angry)
 ``python .\minigrid_ppo_training_script.py -e MiniGrid-ColoredFourRooms-v0 -r partial_img_colored4rooms -p -le MiniGrid-Empty-16x16-v0 -l partial_img_empty_16x16``

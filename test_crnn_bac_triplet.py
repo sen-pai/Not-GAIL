@@ -26,6 +26,8 @@ from modules.rnn_attention_discriminator import ActObsCRNNAttn
 from imitation.algorithms import bc
 import msvcrt
 from BaC.bac_triplet_rnn import BaC_RNN_Triplet
+from BaC.ae_trainer import VAE_trainer
+from modules.cnn_autoencoder import CNN_VAE
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
@@ -104,6 +106,11 @@ parser.add_argument(
 )
 
 
+parser.add_argument(
+    "--ae", "-ae", default=False, help="train VAE", action="store_true",
+)
+
+
 args = parser.parse_args()
 print(args)
 
@@ -129,8 +136,18 @@ if args.not_traj_name != "NA":
         not_trajectories = pickle.load(f)
 
 
+if args.ae:
+    ae_class = CNN_VAE().to("cuda")
+    vae_trainer = VAE_trainer(train_env, ae_class)
+    vae_trainer.train()
+else: 
+    ae_class = None
+
+# bac_class = ActObsCNN(
+#     action_space=train_env.action_space, observation_space=train_env.observation_space, cnn_feature_extractor = ae_class
+# ).to("cuda")
 bac_class = ActObsCRNNAttn(
-    action_space=train_env.action_space, observation_space=train_env.observation_space
+    action_space=train_env.action_space, observation_space=train_env.observation_space, cnn_feature_extractor = ae_class
 ).to("cuda")
 
 
