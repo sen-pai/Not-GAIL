@@ -137,14 +137,23 @@ class VanillaVAE(nn.Module):
         # mu = args[2]
         # log_var = args[3]
 
-        kld_weight = kwargs['M_N'] # Account for the minibatch samples from the dataset
-        recons_loss = F.mse_loss(recons, input)
-
+        # kld_weight = kwargs['M_N'] # Account for the minibatch samples from the dataset
+        recons_loss = F.mse_loss(recons, input, reduction='sum')
+        # print(recons_loss)
 
         kld_loss = torch.mean(-0.5 * torch.sum(1 + log_var - mu ** 2 - log_var.exp(), dim = 1), dim = 0)
 
-        loss = recons_loss + kld_weight * kld_loss
+        loss = recons_loss + kld_loss#kld_weight * kld_loss
+
         return {'loss': loss, 'Reconstruction_Loss':recons_loss, 'KLD':-kld_loss}
+
+
+    def calc_loss(self, input: torch.tensor):
+        [x_hat, inp, mu, log_var] = self.forward(input)
+
+        losses = self.loss_function(x_hat, inp, mu, log_var)
+
+        return losses['loss']
 
     def sample(self,
                num_samples:int,
@@ -172,3 +181,42 @@ class VanillaVAE(nn.Module):
         """
 
         return self.forward(x)[0]
+
+
+
+
+
+class AutoEncoder(nn.Module):
+
+
+    def __init__(self):
+        super(AutoEncoder, self).__init__()
+       
+        #Encoder
+        self.conv1 = nn.Conv2d(3, 16, 3, padding=1)  
+        self.conv2 = nn.Conv2d(16, 4, 3, padding=1)
+        self.pool = nn.MaxPool2d(2, 2)
+       
+        #Decoder
+        self.t_conv1 = nn.ConvTranspose2d(4, 16, 2, stride=2)
+        self.t_conv2 = nn.ConvTranspose2d(16, 3, 2, stride=2)
+
+
+    def forward(self, x):
+        x = F.relu(self.conv1(x))
+        x = self.pool(x)
+        x = F.relu(self.conv2(x))
+        x = self.pool(x)
+        
+        x = F.relu(self.t_conv1(x))
+        x = torch.sigmoid(self.t_conv2(x))
+              
+        return x
+    
+    def calc_loss(self, input: torch.tensor):
+        result = self.forward(input)
+
+        return F.binary_cross_entropy(result, input)
+
+    def generate(self, input: torch.tensor):
+        return self.forward(input)

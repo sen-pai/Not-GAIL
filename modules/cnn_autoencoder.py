@@ -10,6 +10,7 @@ from imitation.data import rollout
 from stable_baselines3.common import preprocessing
 from stable_baselines3.common.torch_layers import NatureCNN
 
+import torch.nn.functional as F
 
 class CNNAutoEncoder(nn.Module):
     """CRNN that takes a trajectory of action, image observation pairs and returns a logit"""
@@ -22,7 +23,7 @@ class CNNAutoEncoder(nn.Module):
         self.observation_space = observation_space
         self.action_space = action_space
 
-        self.feature_dim = 512
+        self.feature_dim = 256
         self.encoder = NatureCNN(observation_space, features_dim=self.feature_dim)
         
 
@@ -33,12 +34,12 @@ class CNNAutoEncoder(nn.Module):
         self.decoder = nn.Sequential(
             nn.ConvTranspose2d(self.feature_dim, 128, kernel_size=5, stride=2),
             nn.ReLU(),
-            nn.ConvTranspose2d(128, 64, kernel_size=5, stride=2),
+            nn.ConvTranspose2d(128, 64, kernel_size=3, stride=2),
             nn.ReLU(),
-            nn.ConvTranspose2d(64, 32, kernel_size=6, stride=2),
+            nn.ConvTranspose2d(64, 32, kernel_size=3, stride=2),
             nn.ReLU(),
-            nn.ConvTranspose2d(32, self.observation_space.shape[0], kernel_size=6, stride=2),
-            nn.Sigmoid(),
+            nn.ConvTranspose2d(32, self.observation_space.shape[0], kernel_size=4, stride=2),
+            nn.Sigmoid()
         )
 
     def _torchify_array(self, ndarray: np.ndarray, **kwargs) -> th.Tensor:
@@ -53,10 +54,13 @@ class CNNAutoEncoder(nn.Module):
         )
         return preprocessed
 
-    def forward(self, obs) -> th.Tensor:
-        obs = self._torchify_with_space(obs, self.observation_space)
-        encoder_vec = self.encoder(obs)
-        print(encoder_vec.shape)
+    def forward(self, input) -> th.Tensor:
+        # input = self._torchify_with_space(input, self.observation_space)
+        # print(input.shape)
+        encoder_vec = self.encoder(input)
+
+        encoder_vec = th.reshape(encoder_vec, [-1, self.feature_dim, 1, 1])
+        # print(encoder_vec.shape)
         return self.decoder(encoder_vec)
 
 
@@ -64,3 +68,21 @@ class CNNAutoEncoder(nn.Module):
         """Heuristic to determine which device this module is on."""
         first_param = next(self.parameters())
         return first_param.device
+
+    def calc_loss(self, input):
+        result = self.forward(input)
+        return F.binary_cross_entropy(result, input)
+
+    def generate(self, input):
+        return self.forward(input)
+
+    def encode(self, input: np.ndarray):
+        input = self._torchify_array(input)
+        input = input.permute(2,0,1)/255
+        
+        return np.array(self.encoder(th.unsqueeze(input,0))[0].detach())
+
+    def decode(self, input: np.ndarray):
+        input = th.reshape(self._torchify_array(input), [-1, self.feature_dim, 1, 1])
+
+        return np.array(self.decoder(input)[0].detach())
