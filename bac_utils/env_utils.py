@@ -11,13 +11,17 @@ from stable_baselines3.common.vec_env import VecTransposeImage
 import torch 
 import random
 
-def minigrid_get_env(env, n_envs, flat = False, partial = False, env_kwargs={}):
+from BaC import bac_wrappers
 
-    if not partial:
+def minigrid_get_env(env, n_envs, flat = False, partial = False, encoder = None, env_kwargs={}):
+
+    if (not partial) and encoder:
+        img_wrappers = lambda env: bac_wrappers.EncoderWrapper(wrappers.ImgObsWrapper(wrappers.RGBImgObsWrapper(env)), encoder)
+    elif not partial:
         img_wrappers = lambda env: wrappers.ImgObsWrapper(wrappers.RGBImgObsWrapper(env))
     else:
         img_wrappers = lambda env: wrappers.ImgObsWrapper(wrappers.RGBImgPartialObsWrapper(env))
-    flat_wrapper = lambda env: wrappers.FlatObsWrapper(env)
+    flat_wrapper = lambda env: wrappers.FlatObsWrapper(env)        
 
     vec_env = make_vec_env(
         env_id=env,
@@ -26,25 +30,7 @@ def minigrid_get_env(env, n_envs, flat = False, partial = False, env_kwargs={}):
         env_kwargs=env_kwargs
     )
 
-    if flat:
-        return vec_env
-    return VecTransposeImage(vec_env)
-
-
-
-def minigrid_get_env_rew_times(env, n_envs, flat = False, env_kwargs={}):
-
-    img_wrappers = lambda env: RewardTimes(wrappers.ImgObsWrapper(wrappers.RGBImgObsWrapper(env)))
-    flat_wrapper = lambda env: wrappers.FlatObsWrapper(env)
-
-    vec_env = make_vec_env(
-        env_id=env,
-        n_envs=n_envs,
-        wrapper_class=flat_wrapper if flat else img_wrappers,
-        env_kwargs=env_kwargs
-    )
-
-    if flat:
+    if flat or encoder:
         return vec_env
     return VecTransposeImage(vec_env)
 
@@ -57,25 +43,3 @@ def minigrid_render(obs):
 def seed_everything(seed = 0):
     random.seed(seed)
     torch.manual_seed(seed)
-
-class RewardTimes(gym.core.Wrapper):
-    """
-    Adds an exploration bonus based on which positions
-    are visited on the grid.
-    """
-
-    def __init__(self, env, factor = 100):
-        super().__init__(env)
-        self.factor = factor
-
-    def step(self, action):
-        obs, reward, done, info = self.env.step(action)
-
-        reward = reward * self.factor
-
-        if done:
-            print(reward)
-        return obs, reward, done, info
-
-    def reset(self, **kwargs):
-        return self.env.reset(**kwargs)

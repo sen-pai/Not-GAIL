@@ -7,6 +7,29 @@ from stable_baselines3.common import callbacks, vec_env
 from imitation.rewards import common
 from libraries.imitation.src.imitation.data.types import Trajectory
 
+import gym
+from gym import spaces
+
+
+class EncoderWrapper(gym.core.ObservationWrapper):
+    """
+    Use the image as the only observation output, no language/mission.
+    """
+
+    def __init__(self, env, encoder):
+        super().__init__(env)
+
+        self.encoder = encoder
+        self.observation_space = spaces.Box(
+            low=0,
+            high=np.inf,
+            shape=(encoder.feature_dim,)
+        )
+
+    def observation(self, obs):
+        return self.encoder.encode(obs)
+
+
 class WrappedRewardCallback(callbacks.BaseCallback):
     """Logs mean wrapped reward as part of RL (or other) training."""
 

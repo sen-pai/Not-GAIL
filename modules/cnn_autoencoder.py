@@ -8,6 +8,7 @@ from imitation.data import rollout
 
 from stable_baselines3.common import preprocessing
 
+import torch.nn.functional as F
 
 class Flatten(nn.Module):
     def forward(self, input):
@@ -22,6 +23,9 @@ class UnFlatten(nn.Module):
     def forward(self, input):
         return input.view(input.size(0), self.size, 1, 1)
 
+        self.feature_dim = 256
+        self.encoder = NatureCNN(observation_space, features_dim=self.feature_dim)
+        
 
 class CNN_VAE(nn.Module):
     def __init__(self, image_channels=3, h_dim=256, z_dim=32):
@@ -47,12 +51,12 @@ class CNN_VAE(nn.Module):
             UnFlatten(h_dim),
             nn.ConvTranspose2d(h_dim, 128, kernel_size=4, stride=2),
             nn.ReLU(),
-            nn.ConvTranspose2d(128, 64, kernel_size=4, stride=2),
+            nn.ConvTranspose2d(128, 64, kernel_size=3, stride=2),
             nn.ReLU(),
-            nn.ConvTranspose2d(64, 32, kernel_size=4, stride=2),
+            nn.ConvTranspose2d(64, 32, kernel_size=3, stride=2),
             nn.ReLU(),
-            nn.ConvTranspose2d(32, image_channels, kernel_size=6, stride=2),
-            # nn.Sigmoid(),
+            nn.ConvTranspose2d(32, self.observation_space.shape[0], kernel_size=4, stride=2),
+            nn.Sigmoid()
         )
 
     # def infer_h_dim(self, obs):
@@ -81,10 +85,14 @@ class CNN_VAE(nn.Module):
         z = self.decoder(z)
         return z
 
-    def reconstruct(self, x):
-        z, mu, logvar = self.encode(x)
-        z = self.decode(z)
-        return z, mu, logvar
+    def forward(self, input) -> th.Tensor:
+        # input = self._torchify_with_space(input, self.observation_space)
+        # print(input.shape)
+        encoder_vec = self.encoder(input)
+
+        encoder_vec = th.reshape(encoder_vec, [-1, self.feature_dim, 1, 1])
+        # print(encoder_vec.shape)
+        return self.decoder(encoder_vec)
 
     def forward(self, x):
         z, _, _ = self.encode(x)
@@ -94,3 +102,21 @@ class CNN_VAE(nn.Module):
         """Heuristic to determine which device this module is on."""
         first_param = next(self.parameters())
         return first_param.device
+
+    def calc_loss(self, input):
+        result = self.forward(input)
+        return F.binary_cross_entropy(result, input)
+
+    def generate(self, input):
+        return self.forward(input)
+
+    def encode(self, input: np.ndarray):
+        input = self._torchify_array(input)
+        input = input.permute(2,0,1)/255
+        
+        return np.array(self.encoder(th.unsqueeze(input,0))[0].detach())
+
+    def decode(self, input: np.ndarray):
+        input = th.reshape(self._torchify_array(input), [-1, self.feature_dim, 1, 1])
+
+        return np.array(self.decoder(input)[0].detach())
