@@ -14,7 +14,7 @@ from stable_baselines3.common.callbacks import (
     StopTrainingOnRewardThreshold,
 )
 
-from bac_utils.env_utils import minigrid_get_env, minigrid_render
+from utils.env_utils import minigrid_get_env, minigrid_render
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
