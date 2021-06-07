@@ -6,7 +6,7 @@ import numpy as np
 
 from BaC import bac_wrappers
 
-import get_classifier
+import bac_utils.get_classifier as get_classifier
 
 def cust_rew(
         state: np.ndarray,
