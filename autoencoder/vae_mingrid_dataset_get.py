@@ -13,7 +13,7 @@ import msvcrt
 import matplotlib.pyplot as plt
 
 
-from bac_utils.env_utils import minigrid_get_env
+from utils.env_utils import minigrid_get_env
 import pickle5 as pickle
 
 

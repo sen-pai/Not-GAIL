@@ -1,4 +1,4 @@
-import vae_model
+import autoencoder.vae_model as vae_model
 import torch
 import torch.nn as nn
 import torch.nn.functional as F

@@ -14,7 +14,7 @@ from imitation.data.types import Trajectory
 
 import pickle5 as pickle
 
-from bac_utils.env_utils import minigrid_get_env, minigrid_render
+from utils.env_utils import minigrid_get_env, minigrid_render
 
 
 parser = argparse.ArgumentParser()

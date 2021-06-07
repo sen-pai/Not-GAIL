@@ -11,12 +11,12 @@ from stable_baselines3.common.vec_env import VecTransposeImage
 import torch 
 import random
 
-from BaC import bac_wrappers
+from utils import env_wrappers
 
 def minigrid_get_env(env, n_envs, flat = False, partial = False, encoder = None, env_kwargs={}):
 
     if (not partial) and encoder:
-        img_wrappers = lambda env: bac_wrappers.EncoderWrapper(wrappers.ImgObsWrapper(wrappers.RGBImgObsWrapper(env)), encoder)
+        img_wrappers = lambda env: env_wrappers.EncoderWrapper(wrappers.ImgObsWrapper(wrappers.RGBImgObsWrapper(env)), encoder)
     elif not partial:
         img_wrappers = lambda env: wrappers.ImgObsWrapper(wrappers.RGBImgObsWrapper(env))
     else:

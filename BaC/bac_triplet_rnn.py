@@ -1,4 +1,4 @@
-from bac_utils.env_utils import minigrid_render, minigrid_get_env
+from utils.env_utils import minigrid_render, minigrid_get_env
 import os, time
 import numpy as np
 

@@ -7,7 +7,6 @@ from stable_baselines3 import PPO
 from gym.wrappers.frame_stack import FrameStack
 from stable_baselines3.common import policies, vec_env
 
-from imitation.data import buffer, types, wrappers
 from imitation.rewards import common as rew_common
 from imitation.rewards import discrim_nets, reward_nets
 from imitation.util import logger, util
@@ -16,8 +15,8 @@ from imitation.data import rollout
 import msvcrt
 import numpy as np
 
-from bac_utils.env_utils import minigrid_render, minigrid_get_env
-from BaC import bac_wrappers
+from utils.env_utils import minigrid_render, minigrid_get_env
+from utils import env_wrappers
 from modules.rnn_discriminator import ActObsCRNN
 from BaC.bac_rnn import BaCRNN
 
@@ -60,7 +59,7 @@ bac_trainer = BaCRNN(
 bac_trainer.bac_classifier.load_state_dict(torch.load("bac_weights/key_test.pt", map_location=torch.device('cpu')))
 
 
-venv = bac_wrappers.RewardVecEnvWrapperRNN(
+venv = env_wrappers.RewardVecEnvWrapperRNN(
     venv, 
     reward_fn=bac_trainer.predict, 
     bac_reward_flag=True   # Whether to use new_rews(False) or old_rews-new_rews(True)

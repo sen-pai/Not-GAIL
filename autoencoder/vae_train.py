@@ -1,4 +1,4 @@
-import vae_model
+import autoencoder.vae_model as vae_model
 from modules.cnn_autoencoder import CNNAutoEncoder
 import torch
 import torch.nn as nn
@@ -15,7 +15,7 @@ from tqdm import tqdm
 import pickle5 as pickle
 
 
-from bac_utils.env_utils import minigrid_get_env
+from utils.env_utils import minigrid_get_env
 
 train_set = torchvision.datasets.CIFAR10(
     root = './data',
