@@ -15,15 +15,19 @@ from stable_baselines3 import PPO
 from stable_baselines3.common import policies
 
 
+import torch
+from utils import env_utils
+
+
 import msvcrt
 
-venv = util.make_vec_env('MiniGrid-Empty-Random-6x6-v0', n_envs=1, post_wrappers= [wrappers.FlatObsWrapper], post_wrappers_kwargs=[{}])
+encoder_model = torch.load("models/ae_minigrid_empty.pt")
+venv = env_utils.minigrid_get_env("MiniGrid-Empty-Random-6x6-v0", flat=True, n_envs=1, partial=False, encoder=None)
 
-
-for i in range(20):
-    discrim_file = "discrims/gail_discrim"+str(i)+".pkl"
-    gen_policy = "gens/gail_gen_"+str(i)
-    gen_policy = "ppo_lava"
+for i in range(10):
+    discrim_file = "gail_training_data/discrims/gail_discrim"+str(i)+".pkl"
+    gen_policy = "gail_training_data/gens/gail_gen_"+str(i)
+    # gen_policy = "ppo_lava"
 
     trained_policy = PPO.load(gen_policy)
     with open(discrim_file, "rb") as f:
@@ -47,9 +51,9 @@ for i in range(20):
                 n_obs, reward, done, info = venv.step(action)
 
                 rew = th.sigmoid(-th.tensor(discrim.predict_reward_test(state = obs, action = action, next_state = n_obs, done = done)))
-                rew2 = discrim.mod_rew(state = obs, action = action, next_state = n_obs, done = done)
+                # rew2 = discrim.mod_rew(state = obs, action = action, next_state = n_obs, done = done)
                 tot_rew += rew
-                print(action, rew, rew2)
+                print(action, rew)
                 
                 obs = copy.deepcopy(n_obs)
                 if done:
@@ -70,9 +74,9 @@ for i in range(20):
         n_obs, reward, done, info = venv.step(action)
 
         rew = th.sigmoid(-th.tensor(discrim.predict_reward_train(state = obs, action = action, next_state = n_obs, done = done)))
-        rew2 = discrim.mod_rew(state = obs, action = action, next_state = n_obs, done = done)
+        # rew2 = discrim.mod_rew(state = obs, action = action, next_state = n_obs, done = done)
         tot_rew += rew
-        print(action, rew, rew2)
+        print(action, rew)
 
         obs = n_obs
         if done:   

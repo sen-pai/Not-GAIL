@@ -13,18 +13,23 @@ from imitation.util import logger, util
 from stable_baselines3 import PPO
 from stable_baselines3.common import policies
 
-with open("trajectories/lava_crossing9_closestlava.pkl", "rb") as f:
+from utils import env_wrappers, env_utils
+
+with open("traj_datasets/empty6x6_flat_100.pkl", "rb") as f:
     trajectories = pickle.load(f)
 
 transitions = rollout.flatten_trajectories(trajectories)
 
 
-venv = util.make_vec_env(
-    "MiniGrid-LavaCrossingS9N1-v0",
-    n_envs=1,
-    post_wrappers=[wrappers.FlatObsWrapper],
-    post_wrappers_kwargs=[{}],
-)
+encoder_model = torch.load("models/ae_minigrid_empty.pt")
+venv = env_utils.minigrid_get_env("MiniGrid-Empty-Random-6x6-v0", flat=True, n_envs=1, partial=False, encoder=None)
+
+# venv = env_utils.minigrid_get_env(
+#     "MiniGrid-LavaCrossingS9N1-v0",
+#     n_envs=1,
+#     post_wrappers=[wrappers.FlatObsWrapper],
+#     post_wrappers_kwargs=[{}],
+# )
 # venv = util.make_vec_env(
 #     'MiniGrid-Empty-Random-6x6-v0', 
 #     n_envs=1, 
@@ -35,7 +40,7 @@ venv = util.make_vec_env(
 
 base_ppo = PPO(policies.ActorCriticPolicy, venv, verbose=1, batch_size=50, n_steps=50)
 
-logger.configure("MiniGrid-KeyEmpty-v0")
+logger.configure("logs/MiniGrid-Empty-6x6-v0")
 
 gail_trainer = adversarial.GAIL(
     venv,
@@ -50,7 +55,7 @@ gail_trainer = adversarial.GAIL(
 total_timesteps = 60000
 for i in range(10):
     gail_trainer.train(total_timesteps=total_timesteps//10)
-    gail_trainer.gen_algo.save("gens/gail_gen_"+str(i))
+    gail_trainer.gen_algo.save("gail_training_data/gens/gail_gen_"+str(i))
 
-    with open('discrims/gail_discrim'+str(i)+'.pkl', 'wb') as handle:
+    with open('gail_training_data/discrims/gail_discrim'+str(i)+'.pkl', 'wb') as handle:
         pickle.dump(gail_trainer.discrim, handle, protocol=pickle.HIGHEST_PROTOCOL)
