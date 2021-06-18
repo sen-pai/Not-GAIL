@@ -386,8 +386,8 @@ class DiscrimNetGAIL(DiscrimNet):
         done: th.Tensor,
     ) -> th.Tensor:
         logits = self.logits_gen_is_high(state, action, next_state, done)
-        # rew = -F.logsigmoid(logits)
-        rew = -(logits)
+        rew = -F.logsigmoid(logits)
+        # rew = -(logits)
         
         assert rew.shape == state.shape[:1]
         return rew

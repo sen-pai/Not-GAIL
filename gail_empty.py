@@ -15,7 +15,7 @@ from stable_baselines3.common import policies
 
 from utils import env_wrappers, env_utils
 
-with open("traj_datasets/empty6x6_flat_100.pkl", "rb") as f:
+with open("traj_datasets/empty6x6-topright_flat_100.pkl", "rb") as f:
     trajectories = pickle.load(f)
 
 transitions = rollout.flatten_trajectories(trajectories)
