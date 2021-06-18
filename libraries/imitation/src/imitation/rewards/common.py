@@ -132,9 +132,8 @@ def compute_train_stats(
         _n_gen_or_1 = max(1, n_generated)
         generated_acc = _n_pred_gen / float(_n_gen_or_1)
 
-        # print(disc_logits_gen_is_high)
-        # label_dist = th.distributions.Bernoulli(disc_logits_gen_is_high)
-        # entropy = th.mean(label_dist.entropy())
+        label_dist = th.distributions.Bernoulli(logits=disc_logits_gen_is_high)
+        entropy = th.mean(label_dist.entropy())
 
     pairs = [
         ("disc_loss", float(th.mean(disc_loss))),
@@ -145,7 +144,7 @@ def compute_train_stats(
         ("disc_acc_gen", float(generated_acc)),
         # entropy of the predicted label distribution, averaged equally across
         # both classes (if this drops then disc is very good or has given up)
-        # ("disc_entropy", float(entropy)),
+        ("disc_entropy", float(entropy)),
         # true number of expert demos and predicted number of expert demos
         ("disc_proportion_expert_true", float(pct_expert)),
         ("disc_proportion_expert_pred", float(pct_expert_pred)),

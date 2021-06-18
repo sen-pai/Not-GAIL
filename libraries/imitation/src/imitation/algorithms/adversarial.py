@@ -44,8 +44,8 @@ class AdversarialTrainer:
         n_disc_updates_per_round: int = 2,
         *,
         log_dir: str = "output/",
-        normalize_obs: bool = False,
-        normalize_reward: bool = False,
+        normalize_obs: bool = True,
+        normalize_reward: bool = True,
         disc_opt_cls: Type[th.optim.Optimizer] = th.optim.Adam,
         disc_opt_kwargs: Optional[Mapping] = None,
         gen_replay_buffer_capacity: Optional[int] = None,
@@ -229,7 +229,6 @@ class AdversarialTrainer:
                 batch["done"],
                 batch["log_policy_act_prob"],
             )
-            
             loss = self.discrim.disc_loss(disc_logits, batch["labels_gen_is_one"])
 
             # do gradient step
@@ -357,10 +356,7 @@ class AdversarialTrainer:
                 )
             gen_samples = self._gen_replay_buffer.sample(self.expert_batch_size)
             gen_samples = types.dataclass_quick_asdict(gen_samples)
-        
-        # gen_samples['obs'] = list(gen_samples['obs'])
-        # gen_samples['obs'] = np.array([i.reshape(1, -1) for i in gen_samples['obs']])
-        
+
         n_gen = len(gen_samples["obs"])
         n_expert = len(expert_samples["obs"])
         if not (n_gen == n_expert == self.expert_batch_size):
@@ -392,7 +388,7 @@ class AdversarialTrainer:
         assert n_expert == len(expert_samples["next_obs"])
         assert n_gen == len(gen_samples["acts"])
         assert n_gen == len(gen_samples["next_obs"])
-        
+
         # Concatenate rollouts, and label each row as expert or generator.
         obs = np.concatenate([expert_samples["obs"], gen_samples["obs"]])
         acts = np.concatenate([expert_samples["acts"], gen_samples["acts"]])

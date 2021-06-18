@@ -14,10 +14,8 @@ class FreeMovingContinuous(gym.Env):
     self.window_dim = window_dim
     self.framestack = framestack
 
-    self.action_space = spaces.Box(low = -1, high = 1,
-                                  shape=(2,), dtype=np.float16)
-    self.observation_space = spaces.Box(low=-self.window_dim, high=self.window_dim,
-                                  shape=(self.framestack*2,), dtype=np.float16)
+    self.action_space = spaces.Box(low = -1, high = 1, shape=(2,), dtype=np.float16)
+    self.observation_space = spaces.Box(low=-self.window_dim, high=self.window_dim, shape=(self.framestack*2,), dtype=np.float16)
     
     self.speed = speed
     self.max_steps = max_steps
@@ -41,7 +39,7 @@ class FreeMovingContinuous(gym.Env):
 
     self.obs_list.append(dc(self.agent_pos))
 
-    obs = np.array(self.obs_list[-self.framestack:]).reshape(-1,1)
+    obs = np.array(self.obs_list[-self.framestack:]).reshape(-1)
     done = self.cur_steps>=self.max_steps
     return obs, 0,  done, {}
 
@@ -54,7 +52,7 @@ class FreeMovingContinuous(gym.Env):
     for i in range(self.framestack):
       self.obs_list.append(dc(self.agent_pos))
 
-    obs = np.array(self.obs_list[-self.framestack:]).reshape(-1,1)
+    obs = np.array(self.obs_list[-self.framestack:]).reshape(-1)
     return obs
 
   def render(self, mode='human', close=False, leave_line = True):
@@ -138,9 +136,10 @@ class FreeMovingContinuous(gym.Env):
     self.reset()
     return traj_dataset
 
+
 if __name__=="__main__":
   env = FreeMovingContinuous()
   traj_dataset = env.generateCircleTraj(1000)  
 
-  with open('traj_datasets/free_moving_circle.pkl', 'wb') as handle:
-    pickle.dump(traj_dataset, handle, protocol=pickle.HIGHEST_PROTOCOL)
+  # with open('traj_datasets/free_moving_circle.pkl', 'wb') as handle:
+  #   pickle.dump(traj_dataset, handle, protocol=pickle.HIGHEST_PROTOCOL)

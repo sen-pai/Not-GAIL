@@ -13,21 +13,24 @@ from imitation.util import logger, util
 from imitation.rewards import common as rewards_common
 from stable_baselines3 import PPO
 from stable_baselines3.common import policies
-
+import gym_custom
 
 import torch
 from utils import env_utils
 
 
 import msvcrt
+import sys
 
-encoder_model = torch.load("models/ae_minigrid_empty.pt")
-venv = env_utils.minigrid_get_env("MiniGrid-Empty-Random-6x6-v0", flat=True, n_envs=1, partial=False, encoder=None)
+# encoder_model = torch.load("models/ae_minigrid_empty.pt")
+# venv = env_utils.minigrid_get_env("MiniGrid-Empty-Random-6x6-v0", flat=True, n_envs=1, partial=False, encoder=None)
+
+venv = util.make_vec_env('FreeMovingContinuous-v0', n_envs=1)
 
 for i in range(10):
+    #i = int(sys.argv[1])
     discrim_file = "gail_training_data/discrims/gail_discrim"+str(i)+".pkl"
     gen_policy = "gail_training_data/gens/gail_gen_"+str(i)
-    # gen_policy = "ppo_lava"
 
     trained_policy = PPO.load(gen_policy)
     with open(discrim_file, "rb") as f:
@@ -41,11 +44,12 @@ for i in range(10):
     x = ''
     while x!='n':
         # action, _state = trained_policy.predict(obs, deterministic=True)
+        venv.reset()
         venv.render()
         x = msvcrt.getwch()
 
         if x=='r':
-            for _ in range(20):
+            for _ in range(500):
                 venv.render()
                 action, _state = trained_policy.predict(obs, deterministic=True)
                 n_obs, reward, done, info = venv.step(action)

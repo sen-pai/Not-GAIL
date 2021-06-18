@@ -1,7 +1,7 @@
 """Common wrapper for adding custom reward values to an environment."""
 
 import collections
-from typing import Deque, List
+from typing import Deque
 
 import numpy as np
 from stable_baselines3.common import callbacks, vec_env
@@ -38,8 +38,6 @@ class RewardVecEnvWrapper(vec_env.VecEnvWrapper):
 
         Will also include the previous reward given by the inner VecEnv in the
         returned info dict under the `wrapped_env_rew` key.
-
-        
 
         Args:
             venv: The VecEnv to wrap.
@@ -87,83 +85,6 @@ class RewardVecEnvWrapper(vec_env.VecEnvWrapper):
         obs_fixed = np.stack(obs_fixed)
 
         rews = self.reward_fn(self._old_obs, self._actions, obs_fixed, np.array(dones))
-        
-        assert len(rews) == len(obs), "must return one rew for each env"
-        done_mask = np.asarray(dones, dtype="bool").reshape((len(dones),))
-
-        # Update statistics
-        self._cumulative_rew += rews
-        for single_done, single_ep_rew in zip(dones, self._cumulative_rew):
-            if single_done:
-                self.episode_rewards.append(single_ep_rew)
-        self._cumulative_rew[done_mask] = 0
-
-        # we can just use obs instead of obs_fixed because on the next iteration
-        # after a reset we DO want to access the first observation of the new
-        # trajectory, not the last observation of the old trajectory
-        self._old_obs = obs
-        for info_dict, old_rew in zip(infos, old_rews):
-            info_dict["wrapped_env_rew"] = old_rew
-        return obs, rews, dones, infos
-
-
-class SomethingRewardVecEnvWrapper(vec_env.VecEnvWrapper):
-    def __init__(
-        self, venv: vec_env.VecEnv, reward_fns: List[common.RewardFn], ep_history: int = 100
-    ):
-        """
-        Expect a minimum of 2 reward functions for Something: always pass in the first fn as the original GAIL fn
-        Followed by the anything fn's
-        """
-        assert not isinstance(venv, SomethingRewardVecEnvWrapper)
-        super().__init__(venv)
-        self.episode_rewards = collections.deque(maxlen=ep_history)
-        self._cumulative_rew = np.zeros((venv.num_envs,))
-        self.main_reward_fn = reward_fns[0]
-        self.anything_reward_fns = reward_fns[1:]
-        self.reset()
-
-    def make_log_callback(self) -> WrappedRewardCallback:
-        """Creates `WrappedRewardCallback` connected to this `RewardVecEnvWrapper`."""
-        return WrappedRewardCallback(self.episode_rewards)
-
-    @property
-    def envs(self):
-        return self.venv.envs
-
-    def reset(self):
-        self._old_obs = self.venv.reset()
-        return self._old_obs
-
-    def step_async(self, actions):
-        self._actions = actions
-        return self.venv.step_async(actions)
-
-    def step_wait(self):
-        obs, old_rews, dones, infos = self.venv.step_wait()
-
-        # The vecenvs automatically reset the underlying environments once they
-        # encounter a `done`, in which case the last observation corresponding to
-        # the `done` is dropped. We're going to pull it back out of the info dict!
-        obs_fixed = []
-        for single_obs, single_done, single_infos in zip(obs, dones, infos):
-            if single_done:
-                single_obs = single_infos["terminal_observation"]
-
-            obs_fixed.append(single_obs)
-        obs_fixed = np.stack(obs_fixed)
-
-        main_rews = self.main_reward_fn(self._old_obs, self._actions, obs_fixed, np.array(dones))
-
-        anything_rews = []
-        for rew_fn in self.anything_reward_fns:
-            anything_rews.append(rew_fn(self._old_obs, self._actions, obs_fixed, np.array(dones)))
-
-        # print("Main Task Reward:", main_rews)
-        # print("Anything Rewards:", anything_rews)
-        
-        #just adding the rewards, shamelessly 
-        rews = main_rews + anything_rews[0]
         assert len(rews) == len(obs), "must return one rew for each env"
         done_mask = np.asarray(dones, dtype="bool").reshape((len(dones),))
 
