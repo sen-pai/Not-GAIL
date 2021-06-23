@@ -25,12 +25,13 @@ import sys
 # encoder_model = torch.load("models/ae_minigrid_empty.pt")
 # venv = env_utils.minigrid_get_env("MiniGrid-Empty-Random-6x6-v0", flat=True, n_envs=1, partial=False, encoder=None)
 
-venv = util.make_vec_env('FreeMovingContinuous-v0', n_envs=1)
+venv = util.make_vec_env('CoverAllTargetsDiscrete-v0', n_envs=1)
 
 for i in range(10):
     #i = int(sys.argv[1])
     discrim_file = "gail_training_data/discrims/gail_discrim"+str(i)+".pkl"
     gen_policy = "gail_training_data/gens/gail_gen_"+str(i)
+    # gen_policy = "models/ppo_cover_all_targets"
 
     trained_policy = PPO.load(gen_policy)
     with open(discrim_file, "rb") as f:
@@ -44,20 +45,20 @@ for i in range(10):
     x = ''
     while x!='n':
         # action, _state = trained_policy.predict(obs, deterministic=True)
-        venv.reset()
+        # obs = venv.reset()
         venv.render()
         x = msvcrt.getwch()
 
         if x=='r':
-            for _ in range(500):
+            for _ in range(100):
                 venv.render()
                 action, _state = trained_policy.predict(obs, deterministic=True)
                 n_obs, reward, done, info = venv.step(action)
 
-                rew = th.sigmoid(-th.tensor(discrim.predict_reward_test(state = obs, action = action, next_state = n_obs, done = done)))
+                # rew = th.sigmoid(-th.tensor(discrim.predict_reward_test(state = obs, action = action, next_state = n_obs, done = done)))
                 # rew2 = discrim.mod_rew(state = obs, action = action, next_state = n_obs, done = done)
-                tot_rew += rew
-                print(action, rew)
+                # tot_rew += rew
+                print(action, reward)
                 
                 obs = copy.deepcopy(n_obs)
                 if done:
@@ -77,14 +78,14 @@ for i in range(10):
 
         n_obs, reward, done, info = venv.step(action)
 
-        rew = th.sigmoid(-th.tensor(discrim.predict_reward_train(state = obs, action = action, next_state = n_obs, done = done)))
+        rew = discrim.predict_reward_train(state = obs, action = action, next_state = n_obs, done = done)
         # rew2 = discrim.mod_rew(state = obs, action = action, next_state = n_obs, done = done)
         tot_rew += rew
         print(action, rew)
-
+        print(venv.get_attr('agent_pos'))
         obs = n_obs
         if done:   
-            print("Total Reward:", tot_rew)
+            print("Total Reward:", reward)
             print("done")
             obs = venv.reset()
             tot_rew = 0
