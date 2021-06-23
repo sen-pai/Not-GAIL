@@ -90,7 +90,7 @@ while cnt<10:
         print(cnt)
 
 
-with open('traj_datasets/free_moving_discrete_2_targets.pkl', 'wb') as handle:
+with open('traj_datasets/free_moving_discrete_circle.pkl', 'wb') as handle:
     pickle.dump(traj_dataset, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
 # with open('data/empty6x6_traj_collection_action_list.pkl', 'wb') as handle:

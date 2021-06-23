@@ -216,7 +216,7 @@ class CoverAllTargetsDiscrete(FreeMovingDiscrete):
 
 if __name__=="__main__":
     env = CoverAllTargetsDiscrete()
-    traj_dataset = env.generateCircleTraj(200)
+    traj_dataset = env.generateCircleTraj(300, radius=20, )
 
-    # with open('traj_datasets/free_moving_circle.pkl', 'wb') as handle:
-    #   pickle.dump(traj_dataset, handle, protocol=pickle.HIGHEST_PROTOCOL)
+    with open('traj_datasets/free_moving_discrete_circle.pkl', 'wb') as handle:
+      pickle.dump(traj_dataset, handle, protocol=pickle.HIGHEST_PROTOCOL)

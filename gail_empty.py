@@ -16,7 +16,7 @@ import gym_custom
 
 from utils import env_wrappers, env_utils
 
-with open("traj_datasets/free_moving_discrete_2_targets.pkl", "rb") as f:
+with open("traj_datasets/free_moving_discrete_circle.pkl", "rb") as f:
     trajectories = pickle.load(f)
 
 transitions = rollout.flatten_trajectories(trajectories)
@@ -56,7 +56,7 @@ gail_trainer = adversarial.GAIL(
     normalize_obs=False
 )
 
-total_timesteps = 100000
+total_timesteps = 60000
 for i in range(10):
     gail_trainer.train(total_timesteps=total_timesteps//10)
     gail_trainer.gen_algo.save("gail_training_data/gens/gail_gen_"+str(i))
