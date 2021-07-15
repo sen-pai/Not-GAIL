@@ -13,8 +13,12 @@ from imitation.util import logger, util
 from stable_baselines3 import PPO
 from stable_baselines3.common import policies
 import gym_custom
+import random
 
 from utils import env_wrappers, env_utils
+
+# random.seed(0)
+# torch.manual_seed(0)
 
 with open("traj_datasets/free_moving_discrete_circle.pkl", "rb") as f:
     trajectories = pickle.load(f)
@@ -34,9 +38,9 @@ transitions = rollout.flatten_trajectories(trajectories)
 venv = util.make_vec_env(
     'CoverAllTargetsDiscrete-v0', 
     n_envs=1
-    # post_wrappers= [wrappers.FullyObsWrapper, wrappers.FlatObsWrapper], 
-    # post_wrappers_kwargs=[{},{}]
 )
+
+
 
 base_ppo = PPO(policies.ActorCriticPolicy,venv, verbose=1, batch_size=100, n_steps=200)
 
@@ -56,7 +60,20 @@ gail_trainer = adversarial.GAIL(
     normalize_obs=False
 )
 
-total_timesteps = 60000
+# total_timesteps = 60000
+# gail_trainer.train(total_timesteps=total_timesteps)
+# for traj in range(10):
+#     obs = venv.reset()
+#     venv.render()
+#     for i in range(100):
+#         action, _ = gail_trainer.gen_algo.predict(obs, deterministic=True)
+#         obs, reward, done, info = venv.step(action)
+#         venv.render()
+#         if done:
+#             break
+#     print("done")
+
+total_timesteps = 300000
 for i in range(10):
     gail_trainer.train(total_timesteps=total_timesteps//10)
     gail_trainer.gen_algo.save("gail_training_data/gens/gail_gen_"+str(i))

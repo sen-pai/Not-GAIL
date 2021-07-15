@@ -68,8 +68,13 @@ class FreeMovingDiscrete(gym.Env):
         img  = 255*np.ones(shape=(self.window_dim*2, self.window_dim*2, 3), dtype=np.uint8)
 
         if leave_line:
-            for a_pos in self.obs_list:
-                img = self.addAgent(a_pos, img)
+            for i in range(len(self.obs_list)):
+                a_pos = self.obs_list[i]
+
+                bg = 0
+                if i<len(self.obs_list)-1:
+                    bg = 128
+                img = self.addAgent(a_pos, img, col = np.array([255,bg,bg]))
         else:
             img = self.addAgent(self.agent_pos, img)
 
@@ -81,12 +86,15 @@ class FreeMovingDiscrete(gym.Env):
     def getMagnitude(self, a):
         return (a[0]**2 + a[1]**2)**0.5
 
-    def addAgent(self, a_pos, img):
+    def addAgent(self, a_pos, img, col = None):
+        if col is None:
+            col = np.array([255,0,0])
+
         agent_pos_display = (np.round(a_pos) + self.window_dim).astype(int)
 
         for i in range(-1,2):
             for j in range(-1,2):
-                img = self.colorImg(agent_pos_display[1] + i, agent_pos_display[0] + j, [255,0,0], img)   
+                img = self.colorImg(agent_pos_display[1] + i, agent_pos_display[0] + j, col, img)   
 
                 # if i==0 and j==0:
                 #     print("\t",agent_pos_display[1] + i,agent_pos_display[0] + j)
@@ -167,7 +175,7 @@ class CoverAllTargetsDiscrete(FreeMovingDiscrete):
     def __init__(self):
         super().__init__(window_dim=50)
 
-        self.targets = np.array([[40,40], [-40,40]])#np.array([[50,-50], [100,-100], [50,-150], [0,-200], [-50,-150], [-100,-100], [-50,-50], [0,0]])
+        self.targets = np.array([[40,40], [-70,40]])#np.array([[50,-50], [100,-100], [50,-150], [0,-200], [-50,-150], [-100,-100], [-50,-50], [0,0]])
         self.target_iter = 0
 
         self.vicinity = 20
@@ -193,7 +201,7 @@ class CoverAllTargetsDiscrete(FreeMovingDiscrete):
         
         return obs
 
-    def render(self, mode = 'human', close=False, leave_line = False):
+    def render(self, mode = 'human', close=False, leave_line = True):
         img  = super().render(mode='False', close=close, leave_line=leave_line)
 
         for i in range(len(self.targets)):
